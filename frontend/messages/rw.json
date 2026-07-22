@@ -1,0 +1,171 @@
+{
+  "app": {
+    "name": "EdeniSystem",
+    "tagline": "Sisitemu yihuse yo gucunga ububiko n’igurishwa ku bacuruzi n’abacuruzi bacuruza byinshi."
+  },
+  "nav": {
+    "dashboard": "Imbonerahamwe",
+    "products": "Ibicuruzwa",
+    "sell": "Kugurisha",
+    "ledger": "Konti",
+    "analytics": "Isesengura"
+  },
+  "auth": {
+    "login": "Kwinjira",
+    "register": "Fungura konti",
+    "email": "Imeri",
+    "password": "Ijambo banga",
+    "loggingIn": "Turimo kwinjira...",
+    "businessName": "Izina ry'ubucuruzi",
+    "ownerEmail": "Imeri ya nyir'ubucuruzi",
+    "phoneOptional": "Telefoni (ntabwo ari ngombwa)",
+    "confirmPassword": "Emeza ijambo banga",
+    "passwordsNoMatch": "Amagambo banga ntahura",
+    "creatingAccount": "Turimo gufungura konti...",
+    "haveAccount": "Ufite konti?",
+    "noAccount": "Nta konti ufite?",
+    "registerCta": "Iyandikishe"
+  },
+  "dashboard": {
+    "title": "Imbonerahamwe",
+    "productsAndStock": "Ibicuruzwa n'Ububiko",
+    "sellGoods": "Kugurisha",
+    "notifications": "Amatangazo",
+    "notificationsHint": "Menyeshwa igihe abakozi bakoze igurishwa.",
+    "notificationsOn": "Birafunguye",
+    "notificationsOff": "Birafunze",
+    "toggleNotifications": "Fungura/Funga amatangazo"
+  },
+  "products": {
+    "title": "Ibicuruzwa",
+    "addProduct": "Ongeramo igicuruzwa",
+    "name": "Izina",
+    "unit": "Igipimo",
+    "skuOptional": "SKU (ntabwo ari ngombwa)",
+    "list": "Urutonde",
+    "noProducts": "Nta bicuruzwa birimo",
+    "addStock": "Ongeramo ububiko"
+  },
+  "stock": {
+    "title": "Ongeramo Ububiko",
+    "quantity": "Umubare",
+    "costPrice": "Igiciro cy'ikiguzi",
+    "expiryDateOptional": "Itariki yo kurangira (ntabwo ari ngombwa)",
+    "save": "Bika",
+    "saving": "Turimo kubika..."
+  },
+  "sell": {
+    "title": "Kugurisha",
+    "product": "Igicuruzwa",
+    "qty": "Umubare",
+    "unitPrice": "Igiciro kuri kimwe",
+    "addItem": "Ongeramo",
+    "items": "Ibyagurishijwe",
+    "noItems": "Nta bintu birimo",
+    "payment": "Uburyo bwo kwishyura",
+    "cash": "Amafaranga",
+    "momo": "MoMo",
+    "creditSale": "Kuri konti?",
+    "no": "Oya",
+    "yes": "Yego",
+    "customerName": "Izina ry'umukiriya",
+    "total": "Igiteranyo",
+    "saveSale": "Bika igurishwa"
+  },
+  "analytics": {
+    "title": "Isesengura",
+    "range": "Igihe",
+    "start": "Itariki itangira",
+    "end": "Itariki irangira",
+    "apply": "Koresha",
+    "print": "Capisha",
+    "exportPdf": "Sohora PDF",
+    "importPdf": "Injiza PDF"
+  },
+  "landing": {
+    "heroTitle": "Gucunga Ubucuruzi Bwacu neza",
+    "heroSubtitle": "Sisitemu yihuse igucunga ububiko n'igurishwa ku bacuruzi n'abacuruzi bacuruza byinshi mu Rwanda",
+    "nav": {
+      "features": "Ibyo Itanga",
+      "pricing": "Igiciro",
+      "contact": "Twandikire"
+    },
+    "heroSlides": {
+      "logo": {
+        "title": "EdeniSystem ku Bucuruzi bugezweho",
+        "subtitle": "Ububiko, igurishwa, konti n’isesengura—byubakiwe umuvuduko n’ubworoherane."
+      },
+      "wholesaler": {
+        "title": "Ku Bacuruzi Bacuruza byinshi n’Abacuruzi",
+        "subtitle": "Injiza ububiko mu makarito/amasaho, ugurishe ku gipande cyangwa ku kilo—byoroshye."
+      },
+      "clothes": {
+        "title": "Ikorera Ubucuruzi Butandukanye",
+        "subtitle": "Kuva ku myenda kugeza ku biribwa—shyiraho ibipimo rimwe, ugurishe byihuse buri munsi."
+      },
+      "tracking": {
+        "title": "Kurikirana Imikorere Ako kanya",
+        "subtitle": "Menya ibigurishwa, ibiri hasi mu bubiko, n’ibikeneye kwitabwaho—igihe cyose."
+      },
+      "car": {
+        "title": "Gucunga Uri Hose",
+        "subtitle": "Reba uko ubucuruzi buhagaze n’iyo uri kure y’iduka."
+      },
+      "clients": {
+        "title": "Yubakiwe Amatsinda Akora",
+        "subtitle": "Menyesha abakozi ako kanya, kandi ukoreshe inzira zoroshye zo gukora."
+      },
+      "performance": {
+        "title": "Yibanda kuri Telefoni",
+        "subtitle": "Yakozwe nk’aho ari app kuri telefone—yihuse, isukuye kandi yizewe."
+      }
+    },
+    "cta": "Tangira",
+    "ctaSecondary": "Iyandikishe Hano",
+    "signIn": "Kwinjira",
+    "featuresTitle": "Inyobyi Ziza Zagushyiriye",
+    "featuresSubtitle": "Ibyo byose ukeneye kugucunga ubucuruzi neza",
+    "features": {
+      "ledger": {
+        "title": "Konti Ziguta",
+        "customerLedger": "Kureba ibyagurishijwe ku mukiriya hamwe n'igurishwa kuri konti",
+        "supplierLedger": "Gucunga konti z'abasubiranya n'amashyari y'ubushakashatsi",
+        "description": "Gukoresha ibitangazo byose by'ubucuruzi mu mahinda arimwe"
+      },
+      "notifications": {
+        "title": "Amatangazo asaha Kare",
+        "description": "Menyeshwa hasumbuye igihe abakozi bakoze igurishwa, gucunga ububiko, cyangwa guhindura amakuru"
+      },
+      "offline": {
+        "title": "Ibikorwa Bidakeneye Internet",
+        "description": "Komeza umurimo naho internet ari rtari neza. Amakuru aratikira automatic igihe wongera mu internet"
+      },
+      "mobile": {
+        "title": "Sisitemu Yafasha Telefone",
+        "description": "Koresha EdeniSystem nkacweka mu telefone yacu. Ibikorwa neza ku mahine yose"
+      }
+    },
+    "pricingTitle": "Igiciro Kirahagije",
+    "pricingSubtitle": "Tangira kugucunga ubucuruzi bwacu ubwambere",
+    "price": "20,000 RWF",
+    "billingPeriod": "buri kwezi",
+    "discount": "Iporomovishe: Shirira amezi 3 ku matrika y'umwaka",
+    "pricingCta": "Tangira Ubwambere Bumuntu",
+    "contactTitle": "Urutonde Rwacu Rurahinduka?",
+    "contactSubtitle": "Ijambo muri bihuguzi byinshi mu Rwanda ikoreshaho EdeniSystem",
+    "contactEmail": "Gusobanura: transeffex@gmail.com",
+    "footer": {
+      "company": "Transeffex Ltd",
+      "tagline": "Gufasha ubucuruzi mu Rwanda",
+      "copyright": "© 2024 Transeffex Ltd. Ibirahure byose bifunzwe.",
+      "contact": "Gusobanura",
+      "email": "transeffex@gmail.com",
+      "social": {
+        "linkedin": "LinkedIn",
+        "instagram": "Instagram",
+        "twitter": "Twitter/X",
+        "tiktok": "TikTok"
+      }
+    }
+  }
+}

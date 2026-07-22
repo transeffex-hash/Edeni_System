@@ -1,0 +1,171 @@
+{
+  "app": {
+    "name": "EdeniSystem",
+    "tagline": "Fast inventory and sales for wholesalers and retailers."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "sell": "Sell",
+    "ledger": "Ledgers",
+    "analytics": "Analytics"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "loggingIn": "Logging in...",
+    "businessName": "Business name",
+    "ownerEmail": "Owner email",
+    "phoneOptional": "Phone (optional)",
+    "confirmPassword": "Confirm password",
+    "passwordsNoMatch": "Passwords do not match",
+    "creatingAccount": "Creating account...",
+    "haveAccount": "Already have an account?",
+    "noAccount": "No account yet?",
+    "registerCta": "Register"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "productsAndStock": "Products & Stock",
+    "sellGoods": "Sell Goods",
+    "notifications": "Notifications",
+    "notificationsHint": "Get notified when staff record sales.",
+    "notificationsOn": "Enabled",
+    "notificationsOff": "Disabled",
+    "toggleNotifications": "Toggle notifications"
+  },
+  "products": {
+    "title": "Products",
+    "addProduct": "Add product",
+    "name": "Name",
+    "unit": "Unit",
+    "skuOptional": "SKU (optional)",
+    "list": "List",
+    "noProducts": "No products yet",
+    "addStock": "Add stock"
+  },
+  "stock": {
+    "title": "Add Stock",
+    "quantity": "Quantity",
+    "costPrice": "Cost price",
+    "expiryDateOptional": "Expiry date (optional)",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "sell": {
+    "title": "Sell Goods",
+    "product": "Product",
+    "qty": "Qty",
+    "unitPrice": "Unit price",
+    "addItem": "Add item",
+    "items": "Items",
+    "noItems": "No items",
+    "payment": "Payment",
+    "cash": "Cash",
+    "momo": "MoMo",
+    "creditSale": "Credit sale?",
+    "no": "No",
+    "yes": "Yes",
+    "customerName": "Customer name",
+    "total": "Total",
+    "saveSale": "Save sale"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "range": "Date range",
+    "start": "Start date",
+    "end": "End date",
+    "apply": "Apply",
+    "print": "Print",
+    "exportPdf": "Export PDF",
+    "importPdf": "Import PDF"
+  },
+  "landing": {
+    "heroTitle": "Manage Your Business with Confidence",
+    "heroSubtitle": "Fast, reliable inventory and sales management for wholesalers and retailers across Rwanda",
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "contact": "Contact"
+    },
+    "heroSlides": {
+      "logo": {
+        "title": "EdeniSystem for Modern Shops",
+        "subtitle": "Inventory, sales, ledgers and analytics—built for speed and ease."
+      },
+      "wholesaler": {
+        "title": "For Wholesalers & Retailers",
+        "subtitle": "Receive stock in cartons or bags and sell in pieces or kilograms—without confusion."
+      },
+      "clothes": {
+        "title": "Works for Any Business",
+        "subtitle": "From clothes to groceries—set your units once and sell faster every day."
+      },
+      "tracking": {
+        "title": "Track Performance in Real Time",
+        "subtitle": "Know what’s selling, what’s low in stock, and what needs attention—anytime."
+      },
+      "car": {
+        "title": "Manage From Anywhere",
+        "subtitle": "Check your business even when you’re away from the shop."
+      },
+      "clients": {
+        "title": "Built for Busy Teams",
+        "subtitle": "Keep staff aligned with instant notifications and simple workflows."
+      },
+      "performance": {
+        "title": "Mobile-First Experience",
+        "subtitle": "Designed to feel like an app on your phone—fast, clean, and reliable."
+      }
+    },
+    "cta": "Get Started",
+    "ctaSecondary": "Sign Up Here",
+    "signIn": "Sign In",
+    "featuresTitle": "Powerful Features Built for You",
+    "featuresSubtitle": "Everything you need to manage your business efficiently",
+    "features": {
+      "ledger": {
+        "title": "Complete Ledgers",
+        "customerLedger": "Track all customer transactions and credit sales",
+        "supplierLedger": "Manage supplier accounts and purchase history",
+        "description": "Keep detailed records of all business transactions in one place"
+      },
+      "notifications": {
+        "title": "Instant Notifications",
+        "description": "Get real-time alerts when staff record sales, manage inventory, or update records"
+      },
+      "offline": {
+        "title": "Works Offline",
+        "description": "Continue working even with poor internet connection. Data syncs automatically when back online"
+      },
+      "mobile": {
+        "title": "Mobile-First Design",
+        "description": "Use EdeniSystem as an app on your mobile phone. Works seamlessly on all devices"
+      }
+    },
+    "pricingTitle": "Simple, Affordable Pricing",
+    "pricingSubtitle": "Start managing your business today",
+    "price": "20,000 RWF",
+    "billingPeriod": "per month",
+    "discount": "Special Offer: Get 3 months free with annual subscription",
+    "pricingCta": "Start Your Free Trial",
+    "contactTitle": "Ready to Transform Your Business?",
+    "contactSubtitle": "Join hundreds of businesses in Rwanda using EdeniSystem",
+    "contactEmail": "Contact us: transeffex@gmail.com",
+    "footer": {
+      "company": "Transeffex Ltd",
+      "tagline": "Empowering businesses in Rwanda",
+      "copyright": "© 2024 Transeffex Ltd. All rights reserved.",
+      "contact": "Contact",
+      "email": "transeffex@gmail.com",
+      "social": {
+        "linkedin": "LinkedIn",
+        "instagram": "Instagram",
+        "twitter": "Twitter/X",
+        "tiktok": "TikTok"
+      }
+    }
+  }
+}

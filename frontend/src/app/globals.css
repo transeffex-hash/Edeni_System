@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0e1217;
+  --muted: #5c6a77;
+  --surface: #f6f2ea;
+  --surface-strong: #ffffff;
+  --accent: #0a7e6b;
+  --accent-2: #f06a2b;
+  --accent-3: #f6c354;
+  --ring: rgba(10, 126, 107, 0.2);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  color: var(--ink);
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(1200px 600px at -10% -10%, rgba(10, 126, 107, 0.15), transparent 60%),
+    radial-gradient(900px 500px at 110% -10%, rgba(240, 106, 43, 0.12), transparent 60%),
+    radial-gradient(900px 700px at 20% 120%, rgba(246, 195, 84, 0.18), transparent 60%);
+  background-attachment: fixed;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #0a7e6b, #f06a2b 70%, #f6c354 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes riseIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatSoft {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: riseIn 0.8s ease-out both;
+}
+
+.float-soft {
+  animation: floatSoft 6s ease-in-out infinite;
+}

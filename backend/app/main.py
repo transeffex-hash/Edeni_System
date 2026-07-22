@@ -1,0 +1,42 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from starlette.responses import PlainTextResponse
+
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from backend.app.core.config import settings
+from backend.app.core.limiter import limiter
+from backend.app.api.router import api_router
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title=settings.app_name)
+
+    # Global rate limiter used by route decorators.
+    app.state.limiter = limiter
+    app.add_middleware(SlowAPIMiddleware)
+    app.add_exception_handler(
+        RateLimitExceeded,
+        lambda _request, _exc: PlainTextResponse("Too many attempts. Try again later.", status_code=429),
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(api_router)
+    return app
+
+
+app = create_app()
