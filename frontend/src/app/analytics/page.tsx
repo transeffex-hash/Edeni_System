@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
       <div>
         <h1 className="text-xl font-semibold">{t("analytics.title")}</h1>
         <div className="text-sm text-gray-600">
-          {t("analytics.range")} — placeholders for PDF export/import will be enabled later.
+          {t("analytics.rangePlaceholder")}
         </div>
       </div>
 
@@ -49,11 +49,11 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="text-sm text-gray-600">
-          Selected: {startDate} → {endDate}
+          {t("analytics.selected", { start: startDate, end: endDate })}
         </div>
 
         <div className="border rounded p-3 text-sm">
-          Analytics cards/charts will appear here after we connect reporting endpoints.
+          {t("analytics.placeholder")}
         </div>
       </div>
     </main>

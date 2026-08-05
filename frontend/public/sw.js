@@ -116,16 +116,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3) Default: try cache, then network (safe for some GET API responses)
+  // 3) Default (API and other GETs): Network-first
   event.respondWith(
     (async () => {
       const cache = await caches.open(PAGES_CACHE);
-      const cached = await cache.match(request);
-      if (cached) return cached;
-
-      const res = await fetch(request);
-      if (res.ok) cache.put(request, res.clone());
-      return res;
+      try {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+      } catch {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        throw new TypeError("Network request failed and no cache available");
+      }
     })()
   );
 });

@@ -83,12 +83,12 @@ export default function SellPage() {
     setSuccess(null);
 
     if (items.length === 0) {
-      setError("Add at least one item");
+      setError(t("errors.addAtLeastOne"));
       return;
     }
 
     if (isCredit && !customerName.trim()) {
-      setError("Customer name is required for credit");
+      setError(t("errors.customerRequired"));
       return;
     }
 
@@ -104,9 +104,9 @@ export default function SellPage() {
       setItems([]);
       setCustomerName("");
       setIsCredit(false);
-      setSuccess(`Saved sale #${res.id}`);
+      setSuccess(t("labels.savedSale", { id: res.id }));
     } catch (e: any) {
-      setError(e?.message ?? "Failed to save sale");
+      setError(e?.message ?? t("errors.failedToSaveSale"));
     }
   }
 
@@ -144,14 +144,14 @@ export default function SellPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm">Unit</label>
+            <label className="text-sm">{t("labels.unit")}</label>
             <select
               className="w-full border rounded px-3 py-2"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               disabled={units.length === 0}
             >
-              {units.length === 0 ? <option value="">(default)</option> : null}
+              {units.length === 0 ? <option value="">{t("labels.default")}</option> : null}
               {units.map((u) => (
                 <option key={u.id} value={u.name}>
                   {u.name}
@@ -182,9 +182,7 @@ export default function SellPage() {
           <div className="divide-y">
             {items.map((i, idx) => (
               <div key={idx} className="p-2 text-sm flex justify-between">
-                <span>
-                  Product #{i.product_id} x {i.quantity}
-                </span>
+                  {t("labels.productXQuantity", { id: i.product_id, qty: i.quantity })}
                 <span>{(i.quantity * i.unit_price).toFixed(2)}</span>
               </div>
             ))}

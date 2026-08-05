@@ -61,7 +61,7 @@ export default function AddStockPage() {
       await apiPost("/api/inventory/stock", payload);
       router.push("/products");
     } catch (e: any) {
-      setError(e?.message ?? "Failed to add stock");
+      setError(e?.message ?? t("errors.failedToAddStock"));
     } finally {
       setLoading(false);
     }
@@ -87,14 +87,14 @@ export default function AddStockPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm">Unit</label>
+            <label className="text-sm">{t("labels.unit")}</label>
             <select
               className="w-full border rounded px-3 py-2"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               disabled={units.length === 0}
             >
-              {units.length === 0 ? <option value="">(default)</option> : null}
+              {units.length === 0 ? <option value="">{t("labels.default")}</option> : null}
               {units.map((u) => (
                 <option key={u.id} value={u.name}>
                   {u.name}

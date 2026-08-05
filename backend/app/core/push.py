@@ -27,7 +27,18 @@ def _firebase_app_initialized() -> bool:
     from firebase_admin import credentials
 
     try:
-        cred = credentials.Certificate(settings.firebase_service_account_path)
+        import os
+        from pathlib import Path
+
+        path_str = settings.firebase_service_account_path
+        if not os.path.isabs(path_str):
+            # Resolve relative path against the backend directory
+            base_dir = Path(__file__).resolve().parents[2]
+            key_path = base_dir / path_str
+        else:
+            key_path = Path(path_str)
+
+        cred = credentials.Certificate(str(key_path))
         firebase_admin.initialize_app(cred)
         return True
     except Exception:

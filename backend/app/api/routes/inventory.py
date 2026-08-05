@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user
+from backend.app.core.audit import log_audit
 from backend.app.core.db import get_db
 from backend.app.models.entities import Product, ProductUnit, StockBatch, User
 from backend.app.schemas.inventory import (
@@ -33,6 +34,16 @@ def create_product(
     db.add(product)
     db.commit()
     db.refresh(product)
+    log_audit(
+        db=db,
+        business_id=user.business_id,
+        user_id=user.id,
+        action="create_product",
+        resource="Product",
+        resource_id=product.id,
+        details={"name": product.name, "sku": product.sku},
+    )
+    db.commit()
     return product
 
 
@@ -94,12 +105,12 @@ def create_product_unit(
 
 @router.get("/products", response_model=list[ProductOut])
 def list_products(
-    limit: int = 100,
+    limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    limit = max(1, min(int(limit), 200))
+    limit = max(1, min(int(limit), 50))
     offset = max(0, int(offset))
     return (
         db.query(Product)
@@ -164,4 +175,14 @@ def add_stock(
     db.add(batch)
     db.commit()
     db.refresh(batch)
+    log_audit(
+        db=db,
+        business_id=user.business_id,
+        user_id=user.id,
+        action="add_stock",
+        resource="StockBatch",
+        resource_id=batch.id,
+        details={"product_id": payload.product_id, "quantity": int(base_qty), "cost_price": float(payload.cost_price)},
+    )
+    db.commit()
     return batch

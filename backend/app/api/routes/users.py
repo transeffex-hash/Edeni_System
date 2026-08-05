@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user, require_boss
 from backend.app.core.db import get_db
+from backend.app.core.audit import log_audit
 from backend.app.core.pii_crypto import pii_decrypt, pii_encrypt, pii_hash
 from backend.app.core.security import hash_password
 from backend.app.models.entities import Business, User
@@ -48,4 +49,16 @@ def create_user(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    log_audit(
+        db=db,
+        business_id=boss.business_id,
+        user_id=boss.id,
+        action="create_user",
+        resource="User",
+        resource_id=user.id,
+        details={"email": payload.email, "role": user.role.value}
+    )
+    db.commit()
+
     return UserOut(id=user.id, email=payload.email, role=user.role)

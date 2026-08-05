@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime, date
 
-from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Numeric, Enum, Boolean
+from sqlalchemy import String, DateTime, Date, ForeignKey, Integer, Numeric, Enum, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models.base import Base
@@ -22,6 +22,7 @@ class Business(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     paid_amount_total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    subscription_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     users: Mapped[list["User"]] = relationship(back_populates="business")
@@ -61,13 +62,13 @@ class Product(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
 
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     sku: Mapped[str | None] = mapped_column(String(64), nullable=True)
     unit: Mapped[str] = mapped_column(String(50), default="unit")
 
     units: Mapped[list["ProductUnit"]] = relationship(back_populates="product")
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
 
 
 class ProductUnit(Base):
@@ -118,7 +119,7 @@ class Sale(Base):
     customer_name_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     total_amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
 
     items: Mapped[list["SaleItem"]] = relationship(back_populates="sale")
 
@@ -139,7 +140,7 @@ class SaleItem(Base):
     unit_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     line_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
 
     sale: Mapped[Sale] = relationship(back_populates="items")
 
@@ -161,5 +162,24 @@ class LedgerEntry(Base):
 
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("ix_ledger_bus_type_hash", "business_id", "ledger_type", "party_name_hash"),
+    )
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+
+    action: Mapped[str] = mapped_column(String(100), nullable=False)
+    resource: Mapped[str] = mapped_column(String(100), nullable=False)
+    resource_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    details: Mapped[str | None] = mapped_column(String(2000), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

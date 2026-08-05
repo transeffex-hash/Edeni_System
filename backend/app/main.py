@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.responses import PlainTextResponse
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 import sys
 from pathlib import Path
@@ -18,6 +19,9 @@ from backend.app.api.router import api_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name)
+
+    if settings.env != "dev":
+        app.add_middleware(HTTPSRedirectMiddleware)
 
     # Global rate limiter used by route decorators.
     app.state.limiter = limiter

@@ -8,7 +8,7 @@ export default function PricingSection() {
   const locale = useLocale();
 
   return (
-    <section className="py-16 md:py-24">
+    <section id="pricing" className="py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center mb-12">

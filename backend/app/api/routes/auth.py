@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 
 from backend.app.core.limiter import limiter
 
 from backend.app.core.db import get_db
 from backend.app.core.config import settings
 from backend.app.core.pii_crypto import pii_encrypt, pii_hash
-from backend.app.core.security import verify_password, create_access_token, hash_password
+from backend.app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
 from backend.app.models.entities import Business, User, UserRole
 from backend.app.schemas.auth import RegisterRequest, Token
 
@@ -28,6 +29,8 @@ def login(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = create_access_token(subject=str(user.id))
+    refresh = create_refresh_token(subject=str(user.id))
+    
     response.set_cookie(
         key="access_token",
         value=token,
@@ -37,12 +40,22 @@ def login(
         path="/",
         max_age=settings.access_token_expire_minutes * 60,
     )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh,
+        httponly=True,
+        samesite="lax",
+        secure=settings.env != "dev",
+        path="/",
+        max_age=settings.refresh_token_expire_minutes * 60,
+    )
     return Token(access_token=token)
 
 
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
     return {"ok": True}
 
 
@@ -82,6 +95,7 @@ def register(
     db.refresh(boss)
 
     token = create_access_token(subject=str(boss.id))
+    refresh = create_refresh_token(subject=str(boss.id))
     response.set_cookie(
         key="access_token",
         value=token,
@@ -91,4 +105,49 @@ def register(
         path="/",
         max_age=settings.access_token_expire_minutes * 60,
     )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh,
+        httponly=True,
+        samesite="lax",
+        secure=settings.env != "dev",
+        path="/",
+        max_age=settings.refresh_token_expire_minutes * 60,
+    )
     return Token(access_token=token)
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    refresh = request.cookies.get("refresh_token")
+    if not refresh:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
+
+    try:
+        payload = jwt.decode(refresh, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        sub: str | None = payload.get("sub")
+        tok_type: str | None = payload.get("type")
+        if not sub or tok_type != "refresh":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    user = db.query(User).filter(User.id == int(sub)).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+
+    new_token = create_access_token(subject=str(user.id))
+    response.set_cookie(
+        key="access_token",
+        value=new_token,
+        httponly=True,
+        samesite="lax",
+        secure=settings.env != "dev",
+        path="/",
+        max_age=settings.access_token_expire_minutes * 60,
+    )
+    return Token(access_token=new_token)

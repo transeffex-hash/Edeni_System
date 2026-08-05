@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "use-intl";
 
 import { API_BASE } from "@/lib/api";
 
 export default function AdminLoginPage() {
+  const t = useTranslations();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,11 +29,11 @@ export default function AdminLoginPage() {
         credentials: "include"
       });
 
-      if (!res.ok) throw new Error("Invalid admin credentials");
+      if (!res.ok) throw new Error(t("admin.invalidCredentials"));
 
       router.push("/admin/businesses");
     } catch (e: any) {
-      setError(e?.message ?? "Failed");
+      setError(e?.message ?? t("admin.failed"));
     } finally {
       setLoading(false);
     }
@@ -39,15 +41,15 @@ export default function AdminLoginPage() {
 
   return (
     <main className="min-h-screen p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-semibold">Platform Admin</h1>
+      <h1 className="text-xl font-semibold">{t("admin.title")}</h1>
 
       <form className="mt-6 space-y-4" onSubmit={onSubmit}>
         <div className="space-y-1">
-          <label className="text-sm">Email</label>
+          <label className="text-sm">{t("admin.email")}</label>
           <input className="w-full border rounded px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm">Password</label>
+          <label className="text-sm">{t("admin.password")}</label>
           <input
             className="w-full border rounded px-3 py-2"
             type="password"
@@ -59,7 +61,7 @@ export default function AdminLoginPage() {
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
 
         <button className="w-full px-4 py-2 rounded bg-black text-white disabled:opacity-50" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? t("admin.signingIn") : t("admin.signIn")}
         </button>
       </form>
     </main>

@@ -3,6 +3,8 @@ type ApiError = {
   message: string;
 };
 
+import { OfflineQueue } from "./offlineQueue";
+
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 async function parseError(res: Response): Promise<ApiError> {
@@ -16,6 +18,22 @@ async function parseError(res: Response): Promise<ApiError> {
   return { status: res.status, message };
 }
 
+async function fetchWithRefresh(url: string, options: RequestInit): Promise<Response> {
+  let res = await fetch(url, options);
+  if (res.status === 401 && !url.includes("/auth/")) {
+    // Attempt to refresh the token
+    const refreshRes = await fetch(API_BASE + "/api/auth/refresh", {
+      method: "POST",
+      credentials: "include"
+    });
+    if (refreshRes.ok) {
+      // Retry the original request once
+      res = await fetch(url, options);
+    }
+  }
+  return res;
+}
+
 /**
  * Small API helper for this app.
  *
@@ -25,7 +43,7 @@ async function parseError(res: Response): Promise<ApiError> {
  * - Centralizing fetch logic avoids mistakes and makes the app faster to build.
  */
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(API_BASE + path, {
+  const res = await fetchWithRefresh(API_BASE + path, {
     method: "GET",
     credentials: "include"
   });
@@ -35,7 +53,13 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(API_BASE + path, {
+  if (typeof window !== "undefined" && !navigator.onLine) {
+    OfflineQueue.enqueue({ path, method: "POST", body });
+    // Return a mock successful response
+    return { _offline: true, status: "queued" } as unknown as T;
+  }
+
+  const res = await fetchWithRefresh(API_BASE + path, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

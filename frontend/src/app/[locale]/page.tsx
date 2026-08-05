@@ -1,5 +1,6 @@
 import LandingNav from "@/components/LandingNav";
 import HeroCarousel from "@/components/HeroCarousel";
+import StatsBar from "@/components/StatsBar";
 import FeaturesSection from "@/components/FeaturesSection";
 import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
@@ -11,6 +12,7 @@ export default function HomePage() {
 
       <main className="flex-1">
         <HeroCarousel />
+        <StatsBar />
         <div id="features">
           <FeaturesSection />
         </div>

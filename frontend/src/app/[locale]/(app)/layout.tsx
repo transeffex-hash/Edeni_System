@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { useTranslations } from "use-intl";
 
 import { useAuthStore } from "@/lib/authStore";
+import OfflineSync from "@/components/OfflineSync";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
@@ -22,7 +24,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link className="font-semibold" href="dashboard">
             {t("app.name")}
           </Link>
-          <div className="text-sm text-gray-600">{me ? me.email : ""}</div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-600">{me ? me.email : ""}</div>
+            <LocaleSwitcher />
+          </div>
         </div>
 
         <nav className="max-w-3xl mx-auto px-4 pb-3 flex gap-3 text-sm">
@@ -41,10 +46,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link className="px-3 py-1 rounded border" href="analytics">
             {t("nav.analytics")}
           </Link>
+          <Link className="px-3 py-1 rounded border" href="reports">
+            {t("nav.reports")}
+          </Link>
         </nav>
       </header>
 
       <main className="max-w-3xl mx-auto p-4">{children}</main>
+      <OfflineSync />
     </div>
   );
 }

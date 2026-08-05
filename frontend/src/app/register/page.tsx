@@ -49,9 +49,9 @@ export default function RegisterPage() {
       router.push(`/${locale}/dashboard`);
     } catch (err) {
       if (err && typeof err === "object" && "message" in err) {
-        setError(String((err as { message?: string }).message || "Register failed"));
+        setError(String((err as { message?: string }).message || t("errors.registerFailed")));
       } else {
-        setError("Register failed");
+        setError(t("errors.registerFailed"));
       }
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function RegisterPage() {
               {t("auth.register")}
             </h1>
             <p className="text-gray-600">
-              Start your shop in minutes and begin managing inventory today.
+              {t("auth.registerSubtitle")}
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default function RegisterPage() {
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 transition-colors"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="My Business Name"
+                placeholder={t("auth.businessNamePlaceholder")}
                 required
               />
             </div>
@@ -113,7 +113,7 @@ export default function RegisterPage() {
                 value={ownerEmail}
                 onChange={(e) => setOwnerEmail(e.target.value)}
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t("auth.emailPlaceholder")}
                 required
               />
             </div>
@@ -127,7 +127,7 @@ export default function RegisterPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 type="tel"
-                placeholder="+250 7XX XXX XXX"
+                placeholder={t("auth.phonePlaceholder")}
               />
             </div>
 
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
               />
             </div>
@@ -154,7 +154,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
               />
             </div>

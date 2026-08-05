@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -5,8 +7,9 @@ from sqlalchemy.orm import Session
 from backend.app.api.deps import get_current_user
 from backend.app.core.db import get_db
 from backend.app.core.pii_crypto import pii_decrypt, pii_encrypt, pii_hash
-from backend.app.models.entities import LedgerEntry, LedgerType, User
-from backend.app.schemas.ledger import LedgerEntryCreate, LedgerEntryOut, LedgerPartyBalance
+from backend.app.core.push import send_push
+from backend.app.models.entities import DeviceToken, LedgerEntry, LedgerType, User, UserRole
+from backend.app.schemas.ledger import LedgerEntryCreate, LedgerEntryOut, LedgerPartyBalance, LedgerStatementOut
 
 router = APIRouter()
 
@@ -34,12 +37,29 @@ def create_entry(
     db.commit()
     db.refresh(entry)
 
+    if payload.amount < 0 and payload.ledger_type == LedgerType.customer:
+        boss_ids = [
+            u.id
+            for u in db.query(User)
+            .filter(User.business_id == user.business_id)
+            .filter(User.role == UserRole.boss)
+            .all()
+        ]
+        tokens = (
+            [t.token for t in db.query(DeviceToken).filter(DeviceToken.user_id.in_(boss_ids)).all()]
+            if boss_ids
+            else []
+        )
+        if tokens:
+            send_push(tokens, title="Payment Received", body=f"Customer {payload.party_name} paid {abs(float(payload.amount)):.2f}.")
+
     return LedgerEntryOut(
         id=entry.id,
         ledger_type=entry.ledger_type,
         party_name=pii_decrypt(entry.party_name_enc) or "",
         amount=float(entry.amount),
         note=entry.note,
+        created_at=entry.created_at,
     )
 
 
@@ -69,6 +89,7 @@ def list_entries(
             party_name=pii_decrypt(r.party_name_enc) or "",
             amount=float(r.amount),
             note=r.note,
+            created_at=r.created_at,
         )
         for r in rows
     ]
@@ -77,15 +98,23 @@ def list_entries(
 @router.get("/balances", response_model=list[LedgerPartyBalance])
 def balances(
     ledger_type: LedgerType,
+    limit: int = 50,
+    offset: int = 0,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    limit = max(1, min(int(limit), 50))
+    offset = max(0, int(offset))
+
     # Returns a quick balance view: total per party.
     rows = (
         db.query(LedgerEntry.party_name_hash, func.sum(LedgerEntry.amount))
         .filter(LedgerEntry.business_id == user.business_id)
         .filter(LedgerEntry.ledger_type == ledger_type)
         .group_by(LedgerEntry.party_name_hash)
+        .order_by(func.sum(LedgerEntry.amount).desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
 
@@ -106,3 +135,105 @@ def balances(
 
     result.sort(key=lambda x: x.balance, reverse=True)
     return result
+
+
+@router.get("/statement", response_model=LedgerStatementOut)
+def statement(
+    ledger_type: LedgerType,
+    party_name: str,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    limit = max(1, min(int(limit), 50))
+    offset = max(0, int(offset))
+
+    party_hash = pii_hash(party_name)
+
+    # 1. Opening balance: sum of entries before start_date
+    opening_balance = 0.0
+    if start_date:
+        ob_result = (
+            db.query(func.sum(LedgerEntry.amount))
+            .filter(LedgerEntry.business_id == user.business_id)
+            .filter(LedgerEntry.ledger_type == ledger_type)
+            .filter(LedgerEntry.party_name_hash == party_hash)
+            .filter(LedgerEntry.created_at < start_date)
+            .scalar()
+        )
+        opening_balance = float(ob_result or 0.0)
+
+    # 2. Outstanding balance: sum of all entries ever
+    out_result = (
+        db.query(func.sum(LedgerEntry.amount))
+        .filter(LedgerEntry.business_id == user.business_id)
+        .filter(LedgerEntry.ledger_type == ledger_type)
+        .filter(LedgerEntry.party_name_hash == party_hash)
+        .scalar()
+    )
+    outstanding_balance = float(out_result or 0.0)
+
+    # 3. Entries within date range
+    q = (
+        db.query(LedgerEntry)
+        .filter(LedgerEntry.business_id == user.business_id)
+        .filter(LedgerEntry.ledger_type == ledger_type)
+        .filter(LedgerEntry.party_name_hash == party_hash)
+    )
+    if start_date:
+        q = q.filter(LedgerEntry.created_at >= start_date)
+    # Compute skip sum for offset (which means we skipped NEWER entries, so we are fetching OLDER entries)
+    # Wait, if we order by desc, offset 0 is newest.
+    rows = q.order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc()).offset(offset).limit(limit).all()
+    rows.reverse() # now in ascending order (oldest first in this batch)
+
+    skip_sum = 0.0
+    if rows:
+        oldest_in_batch = rows[0]
+        # Sum of all entries in the date range that are STRICTLY OLDER than the oldest in this batch
+        older_q = q.filter(
+            (LedgerEntry.created_at < oldest_in_batch.created_at) | 
+            ((LedgerEntry.created_at == oldest_in_batch.created_at) & (LedgerEntry.id < oldest_in_batch.id))
+        )
+        skip_sum = float(older_q.with_entities(func.sum(LedgerEntry.amount)).scalar() or 0.0)
+
+    total_credit_sales = 0.0
+    total_payments = 0.0
+    current_balance = opening_balance + skip_sum
+    entries_out: list[LedgerEntryOut] = []
+
+    for r in rows:
+        amount = float(r.amount)
+        current_balance += amount
+        if amount > 0:
+            total_credit_sales += amount
+        else:
+            total_payments += abs(amount)
+
+        entries_out.append(
+            LedgerEntryOut(
+                id=r.id,
+                ledger_type=r.ledger_type,
+                party_name=party_name,
+                amount=amount,
+                note=r.note,
+                created_at=r.created_at,
+                running_balance=current_balance,
+            )
+        )
+
+    # Reverse to return newest first
+    entries_out.reverse()
+
+    return LedgerStatementOut(
+        opening_balance=opening_balance,
+        total_credit_sales=total_credit_sales,
+        total_payments=total_payments,
+        closing_balance=current_balance,
+        outstanding_balance=outstanding_balance,
+        entries=entries_out,
+    )
+

@@ -43,7 +43,7 @@ export default function DashboardPage() {
     <main className="min-h-screen p-6 max-w-md mx-auto">
       <h1 className="text-xl font-semibold">{t("dashboard.title")}</h1>
       <p className="mt-2 text-sm text-gray-600">
-        {me ? `Logged in as ${me.email} (${me.role})` : "Loading..."}
+        {me ? t("dashboard.loggedInAs", { email: me.email, role: me.role }) : t("dashboard.loading")}
       </p>
 
       <div className="mt-6 space-y-3">

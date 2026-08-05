@@ -12,23 +12,34 @@ type CreateProduct = { name: string; sku?: string | null; unit?: string };
 export default function ProductsPage() {
   const t = useTranslations();
   const [products, setProducts] = useState<Product[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const limit = 50;
+
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("unit");
   const [sku, setSku] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  async function load(reset = false) {
     setError(null);
     try {
-      const data = await apiGet<Product[]>("/api/inventory/products");
-      setProducts(data);
+      const currentOffset = reset ? 0 : offset;
+      const data = await apiGet<Product[]>(`/api/inventory/products?limit=${limit}&offset=${currentOffset}`);
+      if (reset) {
+        setProducts(data);
+      } else {
+        setProducts((prev) => [...prev, ...data]);
+      }
+      setOffset(currentOffset + data.length);
+      setHasMore(data.length === limit);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load products");
+      setError(e instanceof Error ? e.message : t("errors.failedToLoad"));
     }
   }
 
   useEffect(() => {
-    load();
+    load(true);
   }, []);
 
   async function onCreate(e: React.FormEvent) {
@@ -46,9 +57,9 @@ export default function ProductsPage() {
       setName("");
       setSku("");
       setUnit("unit");
-      await load();
+      await load(true);
     } catch (e: any) {
-      setError(e?.message ?? "Failed to create product");
+      setError(e?.message ?? t("errors.failedToCreateProduct"));
     }
   }
 
@@ -101,7 +112,7 @@ export default function ProductsPage() {
             <div key={p.id} className="p-3 flex items-center justify-between">
               <div>
                 <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-gray-600">Unit: {p.unit}</div>
+                <div className="text-sm text-gray-600">{t("labels.unitValue", { unit: p.unit })}</div>
               </div>
               <a className="text-sm underline" href={`/products/${p.id}/stock`}>
                 {t("products.addStock")}
@@ -112,6 +123,17 @@ export default function ProductsPage() {
             <div className="p-3 text-sm">{t("products.noProducts")}</div>
           ) : null}
         </div>
+        {hasMore && products.length > 0 && (
+          <div className="p-3 border-t text-center">
+            <button 
+              type="button" 
+              onClick={() => load(false)} 
+              className="text-sm px-4 py-2 border rounded hover:bg-gray-50"
+            >
+              {t("common.loadMore") || "Load More"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

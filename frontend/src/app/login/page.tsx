@@ -35,13 +35,13 @@ export default function LoginPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error(t("errors.invalidCredentials"));
       }
 
       await res.json();
       router.push(`/${locale}/dashboard`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t("errors.invalidCredentials"));
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t("auth.emailPlaceholder")}
                 required
               />
             </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
               />
             </div>

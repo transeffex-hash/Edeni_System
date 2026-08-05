@@ -1,12 +1,13 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user
 from backend.app.core.db import get_db
 from backend.app.core.push import send_push
-from backend.app.models.entities import DeviceToken, StockBatch, User, UserRole
+from backend.app.models.entities import Business, DeviceToken, LedgerEntry, LedgerType, StockBatch, User, UserRole
 from backend.app.schemas.notifications import RegisterDeviceToken
 
 router = APIRouter()
@@ -30,35 +31,57 @@ def register_device(
     return {"ok": True}
 
 
-@router.post("/run-expiry-check")
-def run_expiry_check(
-    days_before: int = 7,
+@router.post("/daily-cron")
+def daily_cron(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
 ):
     # Simple cron-friendly design:
     # - Call this endpoint daily (later we can secure it with a cron secret).
-    # - It checks stock batches nearing expiry and notifies boss.
+    # - It checks expiry, subscriptions, and large balances for all businesses.
 
-    cutoff = date.today() + timedelta(days=days_before)
+    today = date.today()
+    businesses = db.query(Business).filter(Business.is_active == True, Business.is_deleted == False).all()
 
-    expiring = (
-        db.query(StockBatch)
-        .filter(StockBatch.business_id == user.business_id)
-        .filter(StockBatch.expiry_date.isnot(None))
-        .filter(StockBatch.expiry_date <= cutoff)
-        .filter(StockBatch.quantity > 0)
-        .order_by(StockBatch.expiry_date.asc())
-        .limit(50)
-        .all()
-    )
+    for biz in businesses:
+        boss_ids = [u.id for u in db.query(User).filter(User.business_id == biz.id, User.role == UserRole.boss).all()]
+        if not boss_ids:
+            continue
 
-    if not expiring:
-        return {"ok": True, "count": 0}
+        tokens = [t.token for t in db.query(DeviceToken).filter(DeviceToken.user_id.in_(boss_ids)).all()]
+        if not tokens:
+            continue
 
-    boss_ids = [u.id for u in db.query(User).filter(User.business_id == user.business_id).filter(User.role == UserRole.boss).all()]
-    tokens = [t.token for t in db.query(DeviceToken).filter(DeviceToken.user_id.in_(boss_ids)).all()] if boss_ids else []
+        # 1. Expiry Check
+        for days in [30, 14, 7, 0]:
+            target_date = today + timedelta(days=days)
+            expiring = (
+                db.query(StockBatch)
+                .filter(StockBatch.business_id == biz.id)
+                .filter(StockBatch.expiry_date == target_date)
+                .filter(StockBatch.quantity > 0)
+                .all()
+            )
+            if expiring:
+                day_str = "today" if days == 0 else f"in {days} days"
+                send_push(tokens, title="Expiry Alert", body=f"{len(expiring)} product batch(es) expiring {day_str}.")
 
-    send_push(tokens, title="Expiry alert", body=f"{len(expiring)} item(s) nearing expiry")
+        # 2. Subscription Check
+        if biz.subscription_end_date:
+            days_left = (biz.subscription_end_date - today).days
+            if days_left in [14, 7, 3, 1, 0]:
+                day_str = "today" if days_left == 0 else f"in {days_left} days"
+                send_push(tokens, title="Subscription Alert", body=f"Your subscription expires {day_str}.")
 
-    return {"ok": True, "count": len(expiring)}
+        # 3. Large Outstanding Balances Check
+        balances = (
+            db.query(LedgerEntry.party_name_hash, func.sum(LedgerEntry.amount))
+            .filter(LedgerEntry.business_id == biz.id)
+            .filter(LedgerEntry.ledger_type == LedgerType.customer)
+            .group_by(LedgerEntry.party_name_hash)
+            .having(func.sum(LedgerEntry.amount) > 10000)
+            .all()
+        )
+        if balances:
+            send_push(tokens, title="Credit Alert", body=f"{len(balances)} customer(s) have outstanding balances > 10,000.")
+
+    return {"ok": True}

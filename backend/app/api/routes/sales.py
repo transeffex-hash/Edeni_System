@@ -1,9 +1,11 @@
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user
+from backend.app.core.audit import log_audit
 from backend.app.core.db import get_db
 from backend.app.core.pii_crypto import pii_encrypt, pii_hash
 from backend.app.core.push import send_push
@@ -128,6 +130,15 @@ def create_sale(
             )
             db.add(entry)
 
+        log_audit(
+            db=db,
+            business_id=user.business_id,
+            user_id=user.id,
+            action="create_sale",
+            resource="Sale",
+            resource_id=sale.id,
+            details={"total_amount": float(total_amount), "is_credit": payload.is_credit, "items_count": len(payload.items)},
+        )
         db.commit()
 
         # Boss notification (best-effort):
@@ -145,7 +156,23 @@ def create_sale(
             if boss_ids
             else []
         )
-        send_push(tokens, title="Sale made", body=f"Sale total: {float(total_amount):.2f}")
+        if payload.is_credit:
+            send_push(tokens, title="New Credit Sale", body=f"Credit sale created: {float(total_amount):.2f}")
+        else:
+            send_push(tokens, title="Sale made", body=f"Sale total: {float(total_amount):.2f}")
+
+        # Stock alerts
+        product_ids = {item.product_id for item in payload.items}
+        for pid in product_ids:
+            total_stock = db.query(func.sum(StockBatch.quantity)).filter(
+                StockBatch.business_id == user.business_id,
+                StockBatch.product_id == pid
+            ).scalar() or 0
+            
+            if total_stock == 0:
+                send_push(tokens, title="Stock Alert", body=f"Product ID {pid} is Out of stock!")
+            elif total_stock <= 10:
+                send_push(tokens, title="Stock Alert", body=f"Product ID {pid} is Low on stock ({total_stock} left).")
 
         return {"id": sale.id, "total_amount": float(total_amount)}
     except HTTPException:

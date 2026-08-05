@@ -1,18 +1,66 @@
 {
+  "errors": {
+    "failedToLoad": "Byanze gukurura",
+    "addAtLeastOne": "Ongeramo nibura ikintu kimwe",
+    "customerRequired": "Izina ry'umukiriya rirakenewe ku ideni",
+    "invalidCredentials": "Kwinjira byanze",
+    "failedToSaveSale": "Byanze kubika igurishwa",
+    "failedToCreateProduct": "Byanze kurema igicuruzwa",
+    "failedToAddStock": "Byanze kongeramo ububiko",
+    "registerFailed": "Gufungura konti byanze"
+  },
+  "admin": {
+    "title": "Konseye ya Sisitemu",
+    "email": "Imeri",
+    "password": "Ijambo banga",
+    "signingIn": "Turimo kwinjira...",
+    "signIn": "Injira",
+    "invalidCredentials": "Amakuru y'ubuyobozi si yo",
+    "failed": "Byanze",
+    "businesses": "Ubucuruzi",
+    "businessesHint": "Gucunga uburenganzira, kwishyura no kugenzura.",
+    "refresh": "Vugurura",
+    "active": "Bifunguye",
+    "yes": "Yego",
+    "no": "Oya",
+    "paidTotal": "Ibyishyuwe byose",
+    "phone": "Telefoni",
+    "deactivate": "Funga",
+    "activate": "Fungura",
+    "addPayment": "Ongeraho kwishyura",
+    "addPaymentPrompt": "Amafaranga yishyuwe:",
+    "deleteConfirm": "Emeza gusiba",
+    "delete": "Siba",
+    "noBusinesses": "Nta bucuruzi burimo",
+    "amountPaid": "Bifunguye: {active} | Byishyuwe: {total}"
+  },
+  "labels": {
+    "unit": "Igipimo",
+    "default": "(isanzwe)",
+    "productXQuantity": "Igicuruzwa #{id} x {qty}",
+    "unitValue": "Igipimo: {unit}",
+    "savedSale": "Igurishwa #{id} ryabitswe"
+  },
   "app": {
     "name": "EdeniSystem",
-    "tagline": "Sisitemu yihuse yo gucunga ububiko n’igurishwa ku bacuruzi n’abacuruzi bacuruza byinshi."
+    "tagline": "Sisitemu yihuse yo gucunga ububiko n'igurishwa ku bacuruzi n'abacuruzi bacuruza byinshi."
   },
   "nav": {
     "dashboard": "Imbonerahamwe",
     "products": "Ibicuruzwa",
     "sell": "Kugurisha",
     "ledger": "Konti",
-    "analytics": "Isesengura"
+    "analytics": "Isesengura",
+    "reports": "Raporo"
   },
   "auth": {
     "login": "Kwinjira",
     "register": "Fungura konti",
+    "registerSubtitle": "Tangira iduka ryawe mu minota mike, ucunge ububiko uyu munsi.",
+    "businessNamePlaceholder": "Izina ry'ubucuruzi bwanjye",
+    "emailPlaceholder": "imeri@yawe.com",
+    "phonePlaceholder": "+250 7XX XXX XXX",
+    "passwordPlaceholder": "••••••••",
     "email": "Imeri",
     "password": "Ijambo banga",
     "loggingIn": "Turimo kwinjira...",
@@ -30,6 +78,8 @@
     "title": "Imbonerahamwe",
     "productsAndStock": "Ibicuruzwa n'Ububiko",
     "sellGoods": "Kugurisha",
+    "loading": "Tegereza...",
+    "loggedInAs": "Winjiye nka {email} ({role})",
     "notifications": "Amatangazo",
     "notificationsHint": "Menyeshwa igihe abakozi bakoze igurishwa.",
     "notificationsOn": "Birafunguye",
@@ -72,15 +122,107 @@
     "total": "Igiteranyo",
     "saveSale": "Bika igurishwa"
   },
+  "ledger": {
+    "title": "Konti",
+    "customer": "Umukiriya",
+    "supplier": "Umutanzi",
+    "hint": "Konti ihoraho: positifu ni ideni, negatifu ni kwishyura.",
+    "noEntries": "Nta makuru ya konti",
+    "quickActions": "Ibikorwa byihuse",
+    "quickActionsHint": "Fungura konti y'ishyirahamwe kongeraho ideni cyangwa wandike kwishyura.",
+    "back": "Subira",
+    "allTime": "Igihe Cyose",
+    "today": "Uyu munsi",
+    "last7": "Iminsi 7 ishize",
+    "last30": "Iminsi 30 ishize",
+    "thisMonth": "Ukwezi turimo",
+    "customRange": "Itariki Uhisemo",
+    "to": "kugeza",
+    "outstanding": "Asigaye",
+    "opening": "Itangira",
+    "creditSales": "Igurishwa kuri Konti",
+    "creditPurchases": "Kugura kuri Konti",
+    "payments": "Kwishyura",
+    "closing": "Iherezo",
+    "amount": "Amafaranga",
+    "noteOptional": "Icyerekanwa (ntabwo ari ngombwa)",
+    "addCredit": "Ongeraho ideni",
+    "recordPayment": "Andika kwishyura",
+    "colDate": "Itariki",
+    "colDescription": "Ibisobanuro",
+    "colDebit": "Ideni",
+    "colCredit": "Kwishyura",
+    "colBalance": "Icy'isigaye",
+    "entryCreditSale": "Igurishwa kuri Konti",
+    "entryCreditPurchase": "Kugura kuri Konti",
+    "entryPayment": "Kwishyura",
+    "noEntriesPeriod": "Nta makuru muri iki gihe",
+    "failedToLoad": "Byanze gukurura amakuru",
+    "failedToSave": "Byanze"
+  },
+  "reports": {
+    "title": "Raporo",
+    "type": "Ubwoko bwa raporo",
+    "generate": "Kora raporo",
+    "generating": "Turimo gukora...",
+    "print": "Capisha",
+    "exportExcel": "Sohora Excel (CSV)",
+    "noData": "Nta makuru abonetse muri iki gihe.",
+    "generatedOn": "Yakozwe ku:",
+    "types": {
+      "sales": "Raporo y'Igurishwa",
+      "products": "Imikorere y'Ibicuruzwa",
+      "customers": "Imyenda y'Abakiriya",
+      "suppliers": "Imyenda y'Abaguzi",
+      "expiry": "Raporo y'Ibirangira",
+      "profit": "Raporo y'Inyungu",
+      "cashflow": "Raporo y'Amafaranga"
+    },
+    "col": {
+      "date": "Itariki",
+      "cash": "Amafaranga",
+      "momo": "MoMo",
+      "credit": "Konti",
+      "creditSales": "Igurishwa kuri Konti",
+      "total": "Igiteranyo",
+      "count": "# Igurishwa",
+      "product": "Igicuruzwa",
+      "qtySold": "Iby'Agurishijwe",
+      "revenue": "Amafaranga Yinjiye",
+      "transactions": "Ibikorwa",
+      "balance": "Icy'isigaye",
+      "status": "Imiterere",
+      "owes": "Afite Ideni",
+      "settled": "Yishyuye",
+      "quantity": "Umubare",
+      "expiryDate": "Itariki yo Kurangira",
+      "daysLeft": "Iminsi Isigaye",
+      "urgency": "Uburemere",
+      "expired": "Birangiye",
+      "cogs": "Ikiguzi (Est.)",
+      "profit": "Inyungu",
+      "paymentsReceived": "Kwishyura Byakiriwe",
+      "netCash": "Amafaranga Yinjiye Nyawo"
+    },
+    "urgency": {
+      "expired": "Birangiye",
+      "critical": "Bihangayikisha",
+      "warning": "Mwirinde",
+      "ok": "Neza"
+    }
+  },
   "analytics": {
     "title": "Isesengura",
+    "rangePlaceholder": "Igihe — Gusohora/Injiza PDF bizashyirwaho nyuma.",
     "range": "Igihe",
     "start": "Itariki itangira",
     "end": "Itariki irangira",
     "apply": "Koresha",
     "print": "Capisha",
     "exportPdf": "Sohora PDF",
-    "importPdf": "Injiza PDF"
+    "importPdf": "Injiza PDF",
+    "selected": "Wahisemo: {start} → {end}",
+    "placeholder": "Ibikorwa/Ibishusho by'isesengura bizagaragara hano igihe tuzahuza na endpoint."
   },
   "landing": {
     "heroTitle": "Gucunga Ubucuruzi Bwacu neza",
@@ -93,23 +235,23 @@
     "heroSlides": {
       "logo": {
         "title": "EdeniSystem ku Bucuruzi bugezweho",
-        "subtitle": "Ububiko, igurishwa, konti n’isesengura—byubakiwe umuvuduko n’ubworoherane."
+        "subtitle": "Ububiko, igurishwa, konti n'isesengura byubakiwe umuvuduko n'ubworoherane."
       },
       "wholesaler": {
-        "title": "Ku Bacuruzi Bacuruza byinshi n’Abacuruzi",
+        "title": "Ku Bacuruzi Bacuruza byinshi n'Abacuruzi",
         "subtitle": "Injiza ububiko mu makarito/amasaho, ugurishe ku gipande cyangwa ku kilo—byoroshye."
       },
       "clothes": {
         "title": "Ikorera Ubucuruzi Butandukanye",
-        "subtitle": "Kuva ku myenda kugeza ku biribwa—shyiraho ibipimo rimwe, ugurishe byihuse buri munsi."
+        "subtitle": "Kuva ku myenda kugeza ku biribwa, shyiraho ibipimo rimwe, ugurishe byihuse buri munsi."
       },
       "tracking": {
         "title": "Kurikirana Imikorere Ako kanya",
-        "subtitle": "Menya ibigurishwa, ibiri hasi mu bubiko, n’ibikeneye kwitabwaho—igihe cyose."
+        "subtitle": "Menya ibigurishwa, ibiri hasi mu bubiko, n'ibikeneye kwitabwaho—igihe cyose."
       },
       "car": {
-        "title": "Gucunga Uri Hose",
-        "subtitle": "Reba uko ubucuruzi buhagaze n’iyo uri kure y’iduka."
+        "title": "Gucunga Ubucuruzi aho Uri Hose",
+        "subtitle": "Reba uko ubucuruzi buhagaze n'iyo uri kure y'iduka."
       },
       "clients": {
         "title": "Yubakiwe Amatsinda Akora",
@@ -117,48 +259,48 @@
       },
       "performance": {
         "title": "Yibanda kuri Telefoni",
-        "subtitle": "Yakozwe nk’aho ari app kuri telefone—yihuse, isukuye kandi yizewe."
+        "subtitle": "Yakozwe nk'aho ari app kuri telefone—yihuse, isukuye kandi yizewe."
       }
     },
     "cta": "Tangira",
     "ctaSecondary": "Iyandikishe Hano",
     "signIn": "Kwinjira",
-    "featuresTitle": "Inyobyi Ziza Zagushyiriye",
-    "featuresSubtitle": "Ibyo byose ukeneye kugucunga ubucuruzi neza",
+    "featuresTitle": "Ibiyiranga Bikomeye byakorewe wowe",
+    "featuresSubtitle": "Ibyo ukeneye byose mu gucunga Ubucuruzi bwawe neza",
     "features": {
       "ledger": {
-        "title": "Konti Ziguta",
+        "title": "Konti Zuzuye",
         "customerLedger": "Kureba ibyagurishijwe ku mukiriya hamwe n'igurishwa kuri konti",
-        "supplierLedger": "Gucunga konti z'abasubiranya n'amashyari y'ubushakashatsi",
-        "description": "Gukoresha ibitangazo byose by'ubucuruzi mu mahinda arimwe"
+        "supplierLedger": "Gucunga konti z'abatanga ibicuruzwa n'ibyaguzwe kuri konti",
+        "description": "Bonera hamwe amakuru y'ubucuruzi bwawe"
       },
       "notifications": {
-        "title": "Amatangazo asaha Kare",
-        "description": "Menyeshwa hasumbuye igihe abakozi bakoze igurishwa, gucunga ububiko, cyangwa guhindura amakuru"
+        "title": "Imenyesha rya sistemu",
+        "description": "Menyeshwa ako kanya igihe abakozi bakoze igurishwa, gucunga ububiko, cyangwa guhindura amakuru"
       },
       "offline": {
         "title": "Ibikorwa Bidakeneye Internet",
-        "description": "Komeza umurimo naho internet ari rtari neza. Amakuru aratikira automatic igihe wongera mu internet"
+        "description": "Komeza umurimo naho internet idahagije. Amakuru arahaguma mu igihe cyose Ugarutse kumurongo"
       },
       "mobile": {
-        "title": "Sisitemu Yafasha Telefone",
-        "description": "Koresha EdeniSystem nkacweka mu telefone yacu. Ibikorwa neza ku mahine yose"
+        "title": "Yibanda kuri Telefoni ngendanwa",
+        "description": "Koresha EdeniSystem muri telefone yawe. Ikora hose"
       }
     },
-    "pricingTitle": "Igiciro Kirahagije",
-    "pricingSubtitle": "Tangira kugucunga ubucuruzi bwacu ubwambere",
+    "pricingTitle": "Igiciro Wakwisangamo",
+    "pricingSubtitle": "Tangira kugucunga ubucuruzi bwawe Uyumunsi",
     "price": "20,000 RWF",
     "billingPeriod": "buri kwezi",
-    "discount": "Iporomovishe: Shirira amezi 3 ku matrika y'umwaka",
-    "pricingCta": "Tangira Ubwambere Bumuntu",
-    "contactTitle": "Urutonde Rwacu Rurahinduka?",
-    "contactSubtitle": "Ijambo muri bihuguzi byinshi mu Rwanda ikoreshaho EdeniSystem",
-    "contactEmail": "Gusobanura: transeffex@gmail.com",
+    "discount": "Poromosiyo: Amezi 3 kubuntu mu mwaka 1",
+    "pricingCta": "Tangira Ubwa Mbere ku Buntu",
+    "contactTitle": "Witeguye Guteza Imbere Ubucuruzi Bwawe?",
+    "contactSubtitle": "Ba umwe mubacuruzi bqkoresha EdeniSystem mu Rwanda ",
+    "contactEmail": "Watwandikira: transeffex@gmail.com",
     "footer": {
       "company": "Transeffex Ltd",
-      "tagline": "Gufasha ubucuruzi mu Rwanda",
-      "copyright": "© 2024 Transeffex Ltd. Ibirahure byose bifunzwe.",
-      "contact": "Gusobanura",
+      "tagline": "Guteza Imbere Ubucuruzi mu Rwanda",
+      "copyright": "© 2026 Transeffex Ltd. Uburenganzira bwose burabitswe.",
+      "contact": "Ibisobanuro",
       "email": "transeffex@gmail.com",
       "social": {
         "linkedin": "LinkedIn",
