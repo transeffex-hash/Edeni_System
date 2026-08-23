@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 gunicorn
-pydantic
+pydantic[email]
 pydantic-settings
 SQLAlchemy
 psycopg[binary]
