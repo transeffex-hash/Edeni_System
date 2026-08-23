@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     pii_hmac_key: str
 
     firebase_service_account_path: str | None = None
+    firebase_service_account_json: str | None = None
 
     platform_admin_email: str | None = None
     platform_admin_password: str | None = None

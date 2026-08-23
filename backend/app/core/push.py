@@ -27,26 +27,30 @@ def _firebase_app_initialized() -> bool:
     - Never commit the JSON key to git.
     """
 
-    if not settings.firebase_service_account_path:
-        logger.warning("Firebase service account path is not configured. Skipping push.")
+    if not settings.firebase_service_account_path and not settings.firebase_service_account_json:
+        logger.warning("Firebase service account not configured. Skipping push.")
         return False
 
     import firebase_admin
     from firebase_admin import credentials
 
     try:
-        import os
-        from pathlib import Path
-
-        path_str = settings.firebase_service_account_path
-        if not os.path.isabs(path_str):
-            # Resolve relative path against the backend directory
-            base_dir = Path(__file__).resolve().parents[2]
-            key_path = base_dir / path_str
+        if settings.firebase_service_account_json:
+            import json
+            cred = credentials.Certificate(json.loads(settings.firebase_service_account_json))
         else:
-            key_path = Path(path_str)
+            import os
+            from pathlib import Path
 
-        cred = credentials.Certificate(str(key_path))
+            path_str = settings.firebase_service_account_path
+            if not os.path.isabs(path_str):
+                # Resolve relative path against the backend directory
+                base_dir = Path(__file__).resolve().parents[2]
+                key_path = base_dir / path_str
+            else:
+                key_path = Path(path_str)
+
+            cred = credentials.Certificate(str(key_path))
         firebase_admin.initialize_app(cred)
         return True
     except Exception:
