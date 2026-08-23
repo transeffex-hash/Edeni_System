@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    cookie_domain: str | None = None
+
     @computed_field
     @property
     def effective_database_url(self) -> str:

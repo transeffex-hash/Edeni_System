@@ -18,12 +18,15 @@ router = APIRouter()
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str | None) -> None:
     is_prod = settings.env != "dev"
+    # Share cookies across edenisystem.com and www.edenisystem.com / api.edenisystem.com
+    cookie_domain = settings.cookie_domain or None
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        samesite="none" if is_prod else "lax",
+        samesite="lax",
         secure=is_prod,
+        domain=cookie_domain,
         path="/",
         max_age=settings.access_token_expire_minutes * 60,
     )
@@ -32,8 +35,9 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str 
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            samesite="none" if is_prod else "lax",
+            samesite="lax",
             secure=is_prod,
+            domain=cookie_domain,
             path="/",
             max_age=settings.refresh_token_expire_minutes * 60,
         )
