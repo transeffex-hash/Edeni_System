@@ -16,6 +16,29 @@ from backend.app.schemas.auth import RegisterRequest, Token
 router = APIRouter()
 
 
+def _set_auth_cookies(response: Response, access_token: str, refresh_token: str | None) -> None:
+    is_prod = settings.env != "dev"
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
+        path="/",
+        max_age=settings.access_token_expire_minutes * 60,
+    )
+    if refresh_token:
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            samesite="none" if is_prod else "lax",
+            secure=is_prod,
+            path="/",
+            max_age=settings.refresh_token_expire_minutes * 60,
+        )
+
+
 @router.post("/login", response_model=Token)
 @limiter.limit("10/minute")
 def login(
@@ -37,24 +60,7 @@ def login(
     token = create_access_token(subject=str(user.id))
     refresh = create_refresh_token(subject=str(user.id))
     
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
-        path="/",
-        max_age=settings.access_token_expire_minutes * 60,
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh,
-        httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
-        path="/",
-        max_age=settings.refresh_token_expire_minutes * 60,
-    )
+    _set_auth_cookies(response, token, refresh)
     return Token(access_token=token)
 
 
@@ -107,24 +113,7 @@ def register(
 
     token = create_access_token(subject=str(boss.id))
     refresh = create_refresh_token(subject=str(boss.id))
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
-        path="/",
-        max_age=settings.access_token_expire_minutes * 60,
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh,
-        httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
-        path="/",
-        max_age=settings.refresh_token_expire_minutes * 60,
-    )
+    _set_auth_cookies(response, token, refresh)
     return Token(access_token=token)
 
 
@@ -159,13 +148,5 @@ def refresh_token(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
 
     new_token = create_access_token(subject=str(user.id))
-    response.set_cookie(
-        key="access_token",
-        value=new_token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
-        path="/",
-        max_age=settings.access_token_expire_minutes * 60,
-    )
+    _set_auth_cookies(response, new_token, None)
     return Token(access_token=new_token)
