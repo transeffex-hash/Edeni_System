@@ -517,7 +517,7 @@ function VoidedTable({ rows, t }: { rows: VoidedRow[]; t: any }) {
         <tr>
           <Td colSpan={2}>{t("reports.col.total")}</Td>
           <Td className="text-red-600">{fmt(totalAmount)}</Td>
-          <Td colSpan={4}></Td>
+          <Td colSpan={4}>{""}</Td>
         </tr>
       </tfoot>
     </table>
