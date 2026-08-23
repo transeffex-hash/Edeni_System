@@ -104,6 +104,11 @@ export default function PartyLedgerPage() {
   async function addEntry(sign: "credit" | "payment") {
     setError(null);
 
+    if (!amount || amount <= 0) {
+      setError(`${t("ledger.amount")} ${t("errors.required")}`);
+      return;
+    }
+
     const normalizedAmount = sign === "payment" ? -Math.abs(amount) : Math.abs(amount);
 
     try {
@@ -122,19 +127,19 @@ export default function PartyLedgerPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <div className="text-sm text-gray-600">{type === "supplier" ? t("ledger.supplier") : t("ledger.customer")}</div>
-          <h1 className="text-xl font-semibold">{party}</h1>
+          <div className="text-sm text-gray-500">{type === "supplier" ? t("ledger.supplier") : t("ledger.customer")}</div>
+          <h1 className="app-page-title">{party}</h1>
         </div>
-        <button className="px-3 py-2 border rounded" onClick={() => router.back()} type="button">
+        <button className="app-btn-ghost" onClick={() => router.back()} type="button">
           {t("ledger.back")}
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <select className="border rounded px-3 py-2 text-sm" value={filter} onChange={(e) => setFilter(e.target.value)}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <select className="app-input w-auto" value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">{t("ledger.allTime")}</option>
           <option value="today">{t("ledger.today")}</option>
           <option value="last_7">{t("ledger.last7")}</option>
@@ -144,83 +149,85 @@ export default function PartyLedgerPage() {
         </select>
         {filter === "custom" && (
           <>
-            <input type="date" className="border rounded px-3 py-2 text-sm" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
-            <span className="text-gray-500">{t("ledger.to")}</span>
-            <input type="date" className="border rounded px-3 py-2 text-sm" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
+            <input type="date" className="app-input w-auto" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
+            <span className="text-gray-400 text-sm">{t("ledger.to")}</span>
+            <input type="date" className="app-input w-auto" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
           </>
         )}
       </div>
 
       {statement && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="border rounded p-3 bg-gray-50">
-            <div className="text-xs text-gray-600 uppercase">{t("ledger.outstanding")}</div>
-            <div className="text-lg font-semibold">{statement.outstanding_balance.toFixed(2)}</div>
+          <div className="app-card p-3.5 bg-[#f6f7f8]">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">{t("ledger.outstanding")}</div>
+            <div className="text-lg font-semibold text-gray-800 mt-0.5">{statement.outstanding_balance.toFixed(2)}</div>
           </div>
-          <div className="border rounded p-3">
-            <div className="text-xs text-gray-600 uppercase">{t("ledger.opening")}</div>
-            <div className="text-lg font-semibold">{statement.opening_balance.toFixed(2)}</div>
+          <div className="app-card p-3.5">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">{t("ledger.opening")}</div>
+            <div className="text-lg font-semibold text-gray-800 mt-0.5">{statement.opening_balance.toFixed(2)}</div>
           </div>
-          <div className="border rounded p-3">
-            <div className="text-xs text-gray-600 uppercase">
+          <div className="app-card p-3.5">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">
               {type === "supplier" ? t("ledger.creditPurchases") : t("ledger.creditSales")}
             </div>
-            <div className="text-lg font-semibold text-red-600">{statement.total_credit_sales.toFixed(2)}</div>
+            <div className="text-lg font-semibold text-red-600 mt-0.5">{statement.total_credit_sales.toFixed(2)}</div>
           </div>
-          <div className="border rounded p-3">
-            <div className="text-xs text-gray-600 uppercase">{t("ledger.payments")}</div>
-            <div className="text-lg font-semibold text-green-600">{statement.total_payments.toFixed(2)}</div>
+          <div className="app-card p-3.5">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">{t("ledger.payments")}</div>
+            <div className="text-lg font-semibold text-green-600 mt-0.5">{statement.total_payments.toFixed(2)}</div>
           </div>
-          <div className="border rounded p-3 bg-gray-50 border-gray-300">
-            <div className="text-xs text-gray-600 uppercase">{t("ledger.closing")}</div>
-            <div className="text-lg font-semibold">{statement.closing_balance.toFixed(2)}</div>
+          <div className="app-card p-3.5 bg-[#f6f7f8]">
+            <div className="text-xs text-gray-500 uppercase tracking-wide">{t("ledger.closing")}</div>
+            <div className="text-lg font-semibold text-gray-800 mt-0.5">{statement.closing_balance.toFixed(2)}</div>
           </div>
         </div>
       )}
 
       {error ? <div className="text-sm text-red-600">{error}</div> : null}
 
-      <div className="border rounded p-4 space-y-3">
-        <div className="font-medium">{t("ledger.quickActions")}</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <label className="text-sm">{t("ledger.amount")}</label>
+      <div className="app-card p-5 space-y-3">
+        <div className="font-semibold text-sm text-gray-800">{t("ledger.quickActions")}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="app-label">{t("ledger.amount")}</label>
             <input
-              className="w-full border rounded px-3 py-2"
+              className="app-input"
               type="number"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
+              onWheel={(e) => (e.target as HTMLInputElement).blur()}
             />
           </div>
-          <div className="space-y-1 md:col-span-2">
-            <label className="text-sm">{t("ledger.noteOptional")}</label>
-            <input className="w-full border rounded px-3 py-2" value={note} onChange={(e) => setNote(e.target.value)} />
+          <div className="space-y-1.5 md:col-span-2">
+            <label className="app-label">{t("ledger.noteOptional")}</label>
+            <input className="app-input" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>
 
         <div className="flex gap-3">
-          <button className="px-4 py-2 rounded bg-black text-white" onClick={() => addEntry("credit")} type="button">
+          <button className="app-btn-primary" onClick={() => addEntry("credit")} type="button">
             {t("ledger.addCredit")}
           </button>
-          <button className="px-4 py-2 rounded border" onClick={() => addEntry("payment")} type="button">
+          <button className="app-btn-outline" onClick={() => addEntry("payment")} type="button">
             {t("ledger.recordPayment")}
           </button>
         </div>
       </div>
 
-      <div className="border rounded overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 border-b">
+      <div className="app-card overflow-x-auto">
+        <div className="px-5 pt-4 text-xs text-gray-500">{t("ledger.oldestFirst")}</div>
+        <table className="app-table">
+          <thead>
             <tr>
-              <th className="p-3 font-medium">{t("ledger.colDate")}</th>
-              <th className="p-3 font-medium">{t("ledger.colDescription")}</th>
-              <th className="p-3 font-medium">{t("ledger.colDebit")}</th>
-              <th className="p-3 font-medium">{t("ledger.colCredit")}</th>
-              <th className="p-3 font-medium">{t("ledger.colBalance")}</th>
+              <th>{t("ledger.colDate")}</th>
+              <th>{t("ledger.colDescription")}</th>
+              <th>{t("ledger.colDebit")}</th>
+              <th>{t("ledger.colCredit")}</th>
+              <th>{t("ledger.colBalance")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody>
             {statement?.entries.map((e) => {
               const dateObj = new Date(e.created_at);
               const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -228,30 +235,30 @@ export default function PartyLedgerPage() {
                 ? (type === "supplier" ? t("ledger.entryCreditPurchase") : t("ledger.entryCreditSale"))
                 : t("ledger.entryPayment");
               return (
-                <tr key={e.id} className="hover:bg-gray-50">
-                  <td className="p-3 text-gray-600">{dateStr}</td>
-                  <td className="p-3">{e.note || defaultDesc}</td>
-                  <td className="p-3 text-red-600">{e.amount > 0 ? e.amount.toFixed(2) : "-"}</td>
-                  <td className="p-3 text-green-600">{e.amount < 0 ? Math.abs(e.amount).toFixed(2) : "-"}</td>
-                  <td className="p-3 font-medium">{e.running_balance.toFixed(2)}</td>
+                <tr key={e.id}>
+                  <td className="text-gray-500">{dateStr}</td>
+                  <td>{e.note || defaultDesc}</td>
+                  <td className="text-red-600">{e.amount > 0 ? e.amount.toFixed(2) : "-"}</td>
+                  <td className="text-green-600">{e.amount < 0 ? Math.abs(e.amount).toFixed(2) : "-"}</td>
+                  <td className="font-medium">{e.running_balance.toFixed(2)}</td>
                 </tr>
               );
             })}
             {statement?.entries.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-3 text-center text-gray-500">{t("ledger.noEntriesPeriod")}</td>
+                <td colSpan={5} className="text-center text-gray-500">{t("ledger.noEntriesPeriod")}</td>
               </tr>
             ) : null}
           </tbody>
         </table>
         {hasMore && (statement?.entries.length || 0) > 0 && (
-          <div className="p-3 border-t text-center">
+          <div className="p-3 border-t border-black/5 text-center">
             <button 
               type="button" 
               onClick={() => load(false)} 
-              className="text-sm px-4 py-2 border rounded hover:bg-gray-50"
+              className="app-btn-ghost"
             >
-              {t("common.loadMore") || "Load More"}
+              Load More
             </button>
           </div>
         )}

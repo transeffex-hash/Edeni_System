@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -8,8 +8,9 @@ from backend.app.core.limiter import limiter
 from backend.app.core.db import get_db
 from backend.app.core.config import settings
 from backend.app.core.pii_crypto import pii_encrypt, pii_hash
+from backend.app.core.push import enqueue_push
 from backend.app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
-from backend.app.models.entities import Business, User, UserRole
+from backend.app.models.entities import Business, DeviceToken, User, UserRole
 from backend.app.schemas.auth import RegisterRequest, Token
 
 router = APIRouter()
@@ -27,6 +28,11 @@ def login(
     user = db.query(User).filter(User.email_hash == email_hash).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
+    business = db.query(Business).filter(Business.id == user.business_id).first()
+    if not business or not business.is_active or business.is_deleted:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
 
     token = create_access_token(subject=str(user.id))
     refresh = create_refresh_token(subject=str(user.id))
@@ -65,6 +71,7 @@ def register(
     request: Request,
     payload: RegisterRequest,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     if not payload.business_name.strip():
@@ -93,6 +100,10 @@ def register(
     db.add(boss)
     db.commit()
     db.refresh(boss)
+
+    admin_tokens = [t.token for t in db.query(DeviceToken).filter(DeviceToken.is_admin == True).all()]
+    if admin_tokens:
+        enqueue_push(background_tasks, admin_tokens, "New Business Registered", f"{business.name} just signed up.")
 
     token = create_access_token(subject=str(boss.id))
     refresh = create_refresh_token(subject=str(boss.id))
@@ -133,12 +144,19 @@ def refresh_token(
         tok_type: str | None = payload.get("type")
         if not sub or tok_type != "refresh":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        try:
+            user_id = int(sub)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token") from e
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-    user = db.query(User).filter(User.id == int(sub)).first()
+    user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+    business = db.query(Business).filter(Business.id == user.business_id).first()
+    if not business or not business.is_active or business.is_deleted:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
 
     new_token = create_access_token(subject=str(user.id))
     response.set_cookie(

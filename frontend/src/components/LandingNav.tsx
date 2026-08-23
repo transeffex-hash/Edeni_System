@@ -22,8 +22,8 @@ export default function LandingNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <Link href={`/${locale}`} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center overflow-hidden">
-              <Image src="/edeni system logo.png" alt="EdeniSystem" width={32} height={32} className="object-contain" />
+            <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center overflow-hidden">
+              <Image src="/edeni system logo.png" alt="EdeniSystem" width={56} height={56} className="object-contain" />
             </div>
             <div className="font-display font-semibold text-xl text-gray-900">{t("app.name")}</div>
           </Link>

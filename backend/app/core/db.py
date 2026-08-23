@@ -5,7 +5,7 @@ from backend.app.core.config import settings
 
 
 def get_clean_database_url() -> str:
-    url = settings.database_url
+    url = settings.effective_database_url
     if "sslrootcert=" in url:
         import urllib.parse
         parsed = urllib.parse.urlparse(url)
@@ -17,7 +17,7 @@ def get_clean_database_url() -> str:
     return url
 
 def _ensure_ssl_root_cert() -> None:
-    url = settings.database_url
+    url = settings.effective_database_url
     if "sslmode=verify-full" not in url:
         return
 
@@ -45,5 +45,8 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

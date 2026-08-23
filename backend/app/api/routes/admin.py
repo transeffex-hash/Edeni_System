@@ -8,8 +8,11 @@ from backend.app.core.config import settings
 from backend.app.core.db import get_db
 from backend.app.core.security import create_access_token, verify_password
 from backend.app.core.pii_crypto import pii_decrypt
-from backend.app.models.entities import Business
+from datetime import date, datetime, timedelta
+
+from backend.app.models.entities import Business, DeviceToken
 from backend.app.schemas.admin import BusinessOut
+from backend.app.schemas.notifications import RegisterDeviceToken
 
 router = APIRouter()
 
@@ -87,8 +90,10 @@ def list_businesses(
             id=b.id,
             name=b.name,
             phone=pii_decrypt(b.phone_enc) if b.phone_enc else None,
+            logo_url=b.logo_url,
             is_active=b.is_active,
             paid_amount_total=float(b.paid_amount_total),
+            subscription_end_date=b.subscription_end_date,
             created_at=b.created_at,
         )
         for b in rows
@@ -102,7 +107,7 @@ def set_business_active(
     db: Session = Depends(get_db),
     _: None = Depends(require_platform_admin),
 ):
-    b = db.query(Business).filter(Business.id == business_id).first()
+    b = db.query(Business).filter(Business.id == business_id, Business.is_deleted == False).first()
     if not b:
         raise HTTPException(status_code=404, detail="Business not found")
 
@@ -118,13 +123,38 @@ def add_payment(
     db: Session = Depends(get_db),
     _: None = Depends(require_platform_admin),
 ):
-    b = db.query(Business).filter(Business.id == business_id).first()
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than zero")
+
+    b = db.query(Business).filter(Business.id == business_id, Business.is_deleted == False).first()
     if not b:
         raise HTTPException(status_code=404, detail="Business not found")
 
     b.paid_amount_total = float(b.paid_amount_total) + float(amount)
     db.commit()
     return {"ok": True, "paid_amount_total": float(b.paid_amount_total)}
+
+
+@router.post("/businesses/{business_id}/set-subscription")
+def set_subscription(
+    business_id: int,
+    months: int = 1,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_platform_admin),
+):
+    if months <= 0:
+        raise HTTPException(status_code=400, detail="Months must be greater than zero")
+
+    b = db.query(Business).filter(Business.id == business_id, Business.is_deleted == False).first()
+    if not b:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    today = date.today()
+    start_from = b.subscription_end_date if b.subscription_end_date and b.subscription_end_date > today else today
+    b.subscription_end_date = start_from + timedelta(days=30 * months)
+    b.is_active = True
+    db.commit()
+    return {"ok": True, "subscription_end_date": b.subscription_end_date.isoformat()}
 
 
 @router.post("/businesses/{business_id}/delete")
@@ -142,5 +172,24 @@ def delete_business(
 
     b.is_deleted = True
     b.is_active = False
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/register-device")
+@limiter.limit("10/minute")
+def register_admin_device(
+    request: Request,
+    payload: RegisterDeviceToken,
+    db: Session = Depends(get_db),
+):
+    require_platform_admin(request)
+    existing = db.query(DeviceToken).filter(DeviceToken.token == payload.token).first()
+    if existing:
+        existing.user_id = None
+        existing.business_id = None
+        existing.is_admin = True
+    else:
+        db.add(DeviceToken(token=payload.token, is_admin=True))
     db.commit()
     return {"ok": True}

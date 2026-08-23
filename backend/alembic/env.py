@@ -27,7 +27,7 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    url = os.environ.get("DATABASE_URL") or getattr(settings, "database_url", None)
+    url = os.environ.get("DATABASE_URL") or getattr(settings, "effective_database_url", None)
     if not url:
         raise RuntimeError("DATABASE_URL is not set")
 

@@ -12,6 +12,25 @@ interface HeroSlide {
   key: string;
 }
 
+const HERO_MESSAGES = [
+  {
+    title: "Yibanda kuri Telefoni",
+    body: "Yakozwe nk'aho ari app kuri telefone, irihuta, irasukuye kandi irizewe.",
+  },
+  {
+    title: "Genzura Stock Byoroshye",
+    body: "Menya ibicuruzwa biri kurangira, ibigiye kurangiza igihe n'ibicuruzwa bicuruzwa cyane.",
+  },
+  {
+    title: "Gurisha Vuba",
+    body: "Abacashier bakora sales mu buryo bwihuse, busukuye kandi bugabanya amakosa.",
+  },
+  {
+    title: "Raporo Zisobanutse",
+    body: "Boss abona uko business ihagaze, amadeni, inyungu n'ibikorwa by'ingenzi igihe cyose.",
+  },
+];
+
 const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/edeni system logo.png",
@@ -19,9 +38,9 @@ const HERO_SLIDES: HeroSlide[] = [
     key: "logo",
   },
   {
-    image: "/a wholesaler man selling stock edeni system.jpg",
+    image: "/a woman in a car and seeing how her business is performing on her phone.png",
     alt: "Wholesaler managing stock",
-    key: "wholesaler",
+    key: "tracking",
   },
   {
     image: "/woman selling clothes edeni system.avif",
@@ -31,7 +50,7 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/business owner looking into his phone tracking performancepng.png",
     alt: "Business owner tracking performance",
-    key: "tracking",
+    key: "owner-tracking",
   },
   {
     image: "/a woman in a car and seeing how her business is performing on her phone.png",
@@ -54,12 +73,18 @@ export default function HeroCarousel() {
   const t = useTranslations("landing");
   const locale = useLocale();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentMessage, setCurrentMessage] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState({ users: 500, businesses: 2500, products: 50000 });
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    setMounted(true);
+    const slideInterval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
+    const messageInterval = setInterval(() => {
+      setCurrentMessage((prev) => (prev + 1) % HERO_MESSAGES.length);
+    }, 6500);
     
     // Fetch real statistics
     apiGet<{users: number, businesses: number, products: number}>("/api/public/stats")
@@ -70,10 +95,14 @@ export default function HeroCarousel() {
       })
       .catch(e => console.error("Failed to load public stats", e));
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(slideInterval);
+      clearInterval(messageInterval);
+    };
   }, []);
 
-  const slideKey = HERO_SLIDES[currentSlide]?.key ?? "logo";
+  const activeMessage = HERO_MESSAGES[currentMessage] ?? HERO_MESSAGES[0];
+  const formatStat = (value: number) => (mounted ? value.toLocaleString() : String(value));
 
   return (
     <section className="relative w-full min-h-[600px] md:min-h-[750px] overflow-hidden bg-[#064e3b]">
@@ -111,11 +140,11 @@ export default function HeroCarousel() {
             </div>
             
             {/* Typography */}
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-white mt-2 mb-6 leading-tight">
-              Yibanda kuri Telefoni
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-white mt-2 mb-6 leading-tight transition-opacity duration-500">
+              {activeMessage.title}
             </h1>
-            <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-lg">
-              Yakozwe nk&apos; aho ari app kuri telefone, irihuta, irasukuye kandi irizewe.
+            <p className="text-lg sm:text-xl text-gray-200 mb-10 max-w-lg transition-opacity duration-500">
+              {activeMessage.body}
             </p>
             
             {/* Buttons */}
@@ -162,7 +191,7 @@ export default function HeroCarousel() {
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-900">{stats.users.toLocaleString()}+</div>
+              <div className="font-bold text-gray-900">{formatStat(stats.users)}+</div>
               <div className="text-sm text-gray-500">Abakoresha</div>
             </div>
           </div>
@@ -171,7 +200,7 @@ export default function HeroCarousel() {
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-900">{stats.businesses.toLocaleString()}+</div>
+              <div className="font-bold text-gray-900">{formatStat(stats.businesses)}+</div>
               <div className="text-sm text-gray-500">Amaduka</div>
             </div>
           </div>
@@ -180,7 +209,7 @@ export default function HeroCarousel() {
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
             <div>
-              <div className="font-bold text-gray-900">{stats.products.toLocaleString()}+</div>
+              <div className="font-bold text-gray-900">{formatStat(stats.products)}+</div>
               <div className="text-sm text-gray-500">Ibicuruzwa</div>
             </div>
           </div>

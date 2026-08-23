@@ -6,6 +6,7 @@
     "invalidCredentials": "Login failed / Invalid credentials",
     "failedToSaveSale": "Failed to save sale",
     "failedToCreateProduct": "Failed to create product",
+    "required": "This field is required",
     "failedToAddStock": "Failed to add stock",
     "registerFailed": "Register failed"
   },
@@ -32,7 +33,17 @@
     "deleteConfirm": "Delete this business? This will disable it.",
     "delete": "Delete",
     "noBusinesses": "No businesses",
-    "amountPaid": "Active: {active} | Paid total: {total}"
+    "amountPaid": "Active: {active} | Paid total: {total}",
+    "subscription": "Subscription",
+    "subscriptionEnd": "Ends on",
+    "daysLeft": "{days} days left",
+    "expired": "Expired",
+    "noSubscription": "No subscription",
+    "extendSubscription": "Extend",
+    "extendPrompt": "Months to add:",
+    "logout": "Logout",
+    "logo": "Logo",
+    "createdOn": "Created on"
   },
   "labels": {
     "unit": "Unit",
@@ -51,7 +62,50 @@
     "sell": "Sell",
     "ledger": "Ledgers",
     "analytics": "Analytics",
-    "reports": "Reports"
+    "reports": "Reports",
+    "branches": "Branches",
+    "team": "Team",
+    "settings": "Settings"
+  },
+  "branches": {
+    "title": "Branches",
+    "hint": "Create and manage your business branches.",
+    "name": "Branch name",
+    "namePlaceholder": "e.g. Kigali Main",
+    "create": "Create branch",
+    "saving": "Creating...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noBranches": "No branches yet. Create your first branch.",
+    "superBossOnly": "Only the super boss can create branches.",
+    "created": "Branch created",
+    "failedToCreate": "Failed to create branch",
+    "failedToLoad": "Failed to load branches"
+  },
+  "team": {
+    "title": "Team",
+    "hint": "Manage users and their branch assignments.",
+    "email": "Email",
+    "password": "Password",
+    "role": "Role",
+    "branch": "Branch",
+    "boss": "Boss",
+    "user": "Cashier",
+    "noBranch": "No branch (super boss)",
+    "create": "Add user",
+    "saving": "Saving...",
+    "noUsers": "No users yet.",
+    "created": "User created",
+    "failedToCreate": "Failed to create user",
+    "failedToLoad": "Failed to load users",
+    "selectBranch": "Select branch",
+    "superBossNote": "Super boss can assign users to any branch. Branch bosses can only add cashiers to their own branch.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "delete": "Delete",
+    "deactivateConfirm": "Deactivate this user? They will no longer be able to log in."
   },
   "auth": {
     "login": "Login",
@@ -72,7 +126,8 @@
     "creatingAccount": "Creating account...",
     "haveAccount": "Already have an account?",
     "noAccount": "No account yet?",
-    "registerCta": "Register"
+    "registerCta": "Register",
+    "logout": "Logout"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -87,22 +142,74 @@
     "toggleNotifications": "Toggle notifications"
   },
   "products": {
-    "title": "Products",
+    "title": "Products & Stock",
     "addProduct": "Add product",
+    "saving": "Saving...",
     "name": "Name",
     "unit": "Unit",
     "skuOptional": "SKU (optional)",
-    "list": "List",
+    "list": "Stock Overview",
     "noProducts": "No products yet",
-    "addStock": "Add stock"
+    "addStock": "Add stock",
+    "search": "Search products...",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "filter": "Filter",
+    "clearFilters": "Clear",
+    "totalStock": "Stock",
+    "costPrice": "Cost",
+    "expiry": "Expiry",
+    "lastAdded": "Last added",
+    "batches": "Batches",
+    "actions": "Actions",
+    "addStockFor": "Add stock for {name}",
+    "noStock": "No stock",
+    "inStock": "in stock",
+    "lowStock": "Low",
+    "outOfStock": "Out",
+    "loadMore": "Load more",
+    "totalProducts": "Products",
+    "totalStockValue": "Stock Value",
+    "lowStockItems": "Low Stock",
+    "outOfStockItems": "Out of Stock",
+    "recentSales": "Recent Sales",
+    "saleId": "#",
+    "items": "Items",
+    "amount": "Amount",
+    "payment": "Payment",
+    "customer": "Customer",
+    "date": "Date",
+    "receipt": "Receipt",
+    "voidSale": "Void",
+    "voidConfirm": "Void this sale? Stock will be restored.",
+    "voided": "Voided",
+    "noSales": "No sales yet",
+    "removeItem": "Remove",
+    "viewReceipt": "View Receipt"
   },
   "stock": {
     "title": "Add Stock",
     "quantity": "Quantity",
     "costPrice": "Cost price",
     "expiryDateOptional": "Expiry date (optional)",
+    "boughtOnCredit": "Bought on credit from a supplier",
+    "supplierName": "Supplier name",
+    "supplierNamePlaceholder": "e.g. Kigali Wholesalers",
+    "amountPaidNow": "Amount paid now (optional)",
+    "creditHint": "The unpaid balance is added to this supplier's ledger.",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "history": "Stock History",
+    "addedOn": "Added on",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this stock batch? This cannot be undone.",
+    "editBatch": "Edit Stock Batch",
+    "cancel": "Cancel",
+    "update": "Update",
+    "updating": "Updating...",
+    "noStock": "No stock added yet",
+    "bossOnlyEdit": "Only boss can edit or delete stock"
   },
   "sell": {
     "title": "Sell Goods",
@@ -119,8 +226,10 @@
     "no": "No",
     "yes": "Yes",
     "customerName": "Customer name",
+    "customerNamePlaceholder": "Start typing a customer name...",
     "total": "Total",
-    "saveSale": "Save sale"
+    "saveSale": "Save sale",
+    "saving": "Saving..."
   },
   "ledger": {
     "title": "Ledgers",
@@ -169,6 +278,9 @@
     "exportExcel": "Export Excel (CSV)",
     "noData": "No data found for this report.",
     "generatedOn": "Generated on:",
+    "productsSold": "Products sold in this period",
+    "activeInPeriod": "Only parties with activity in this period",
+    "includeSettled": "Include settled (zero balance)",
     "types": {
       "sales": "Sales Report",
       "products": "Product Performance",
@@ -176,7 +288,9 @@
       "suppliers": "Supplier Balances",
       "expiry": "Expiry Report",
       "profit": "Profit Report",
-      "cashflow": "Cash Flow Report"
+      "cashflow": "Cash Flow Report",
+      "overdue": "Overdue Debts",
+      "voided": "Voided Sales"
     },
     "col": {
       "date": "Date",
@@ -202,7 +316,11 @@
       "cogs": "Est. COGS",
       "profit": "Profit",
       "paymentsReceived": "Payments Received",
-      "netCash": "Net Cash In"
+      "netCash": "Net Cash In",
+      "paymentMethod": "Payment Method",
+      "voidedBy": "Voided By",
+      "voidedAt": "Voided At",
+      "reason": "Reason"
     },
     "urgency": {
       "expired": "Expired",
@@ -213,16 +331,36 @@
   },
   "analytics": {
     "title": "Analytics",
-    "rangePlaceholder": "Date range — PDF export/import will be enabled later.",
+    "subtitle": "Visual insights for sales, profit, cash movement, products and debt risk.",
+    "rangePlaceholder": "Date range",
     "range": "Date range",
     "start": "Start date",
     "end": "End date",
-    "apply": "Apply",
-    "print": "Print",
+    "apply": "Apply filters",
+    "loading": "Loading...",
+    "print": "Print insights",
     "exportPdf": "Export PDF",
     "importPdf": "Import PDF",
-    "selected": "Selected: {start} → {end}",
-    "placeholder": "Analytics cards/charts will appear here after we connect reporting endpoints."
+    "selected": "Viewing: {start} → {end}",
+    "placeholder": "No analytics data available yet.",
+    "noData": "No data for this period",
+    "salesTrend": "Sales trend",
+    "salesTrendHint": "Daily sales performance for the selected period.",
+    "cashMix": "Payment mix",
+    "cashMixHint": "Cash, MoMo and credit contribution to sales.",
+    "bestProducts": "Best-selling products",
+    "bestProductsHint": "Products ranked by revenue.",
+    "profitLeaders": "Profit leaders",
+    "profitLeadersHint": "Products bringing the strongest gross profit.",
+    "debtRisk": "Debt risk overview",
+    "debtRiskHint": "Top customer receivables and supplier obligations from ledgers.",
+    "marginInsight": "Gross margin for this period is {margin}% based on available cost data.",
+    "metrics": {
+      "sales": "Total sales",
+      "profit": "Gross profit",
+      "cashIn": "Net cashflow",
+      "customerDebt": "Customer debt"
+    }
   },
   "landing": {
     "heroTitle": "Manage Your Business with Confidence",
@@ -309,5 +447,19 @@
         "tiktok": "TikTok"
       }
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "hint": "Update your email or password.",
+    "passwordPlaceholder": "Leave blank to keep current",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Profile saved",
+    "failedToSave": "Failed to save"
+  },
+  "confirm": {
+    "title": "Are you sure?",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }

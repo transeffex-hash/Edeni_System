@@ -2,8 +2,6 @@
 
 import { useEffect } from "react";
 
-import { registerFirebaseWebPushPlaceholder } from "@/lib/firebaseWebPush";
-
 /**
  * Registers the PWA service worker.
  *
@@ -14,16 +12,31 @@ import { registerFirebaseWebPushPlaceholder } from "@/lib/firebaseWebPush";
 export default function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (process.env.NODE_ENV !== "production") return;
     if (!("serviceWorker" in navigator)) return;
 
-    // Register after the page becomes idle to avoid slowing initial render.
     const register = async () => {
       try {
-        await navigator.serviceWorker.register("/sw.js");
-        registerFirebaseWebPushPlaceholder();
+        // Unregister any stale service workers first so old caches are cleared
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+
+        // Register the new service worker
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "activated" && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
+          });
+        });
       } catch {
-        // In production you might log this to an error tracker.
+        // SW registration failed — app still works without it
       }
     };
 

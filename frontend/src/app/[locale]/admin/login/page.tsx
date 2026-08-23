@@ -40,30 +40,51 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-semibold">{t("admin.title")}</h1>
-
-      <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-        <div className="space-y-1">
-          <label className="text-sm">{t("admin.email")}</label>
-          <input className="w-full border rounded px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <label className="text-sm">{t("admin.password")}</label>
-          <input
-            className="w-full border rounded px-3 py-2"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0a7e6b] text-white font-display font-bold text-xl mb-3">
+            E
+          </div>
+          <h1 className="font-display text-2xl font-semibold text-gray-900">{t("admin.title")}</h1>
+          <p className="text-sm text-gray-500 mt-1">EdeniSystem</p>
         </div>
 
-        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        <form className="app-card p-6 md:p-8 space-y-5" onSubmit={onSubmit}>
+          <div className="space-y-1.5">
+            <label className="app-label">{t("admin.email")}</label>
+            <input
+              className="app-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="app-label">{t("admin.password")}</label>
+            <input
+              className="app-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
-        <button className="w-full px-4 py-2 rounded bg-black text-white disabled:opacity-50" disabled={loading}>
-          {loading ? t("admin.signingIn") : t("admin.signIn")}
-        </button>
-      </form>
+          {error ? <div className="text-sm text-red-600">{error}</div> : null}
+
+          <button
+            className="app-btn-primary w-full"
+            disabled={loading}
+            type="submit"
+          >
+            {loading ? t("admin.signingIn") : t("admin.signIn")}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.responses import PlainTextResponse
@@ -15,6 +16,9 @@ if str(REPO_ROOT) not in sys.path:
 from backend.app.core.config import settings
 from backend.app.core.limiter import limiter
 from backend.app.api.router import api_router
+
+UPLOADS_DIR = Path(__file__).resolve().parents[2] / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def create_app() -> FastAPI:
@@ -38,6 +42,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Serve uploaded files (logos, etc.) at /uploads/
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
     app.include_router(api_router)
     return app

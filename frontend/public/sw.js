@@ -18,7 +18,7 @@
   - We keep cache names versioned to allow clean upgrades.
 */
 
-const VERSION = "v1";
+const VERSION = "v3";
 const STATIC_CACHE = `edenisystem-static-${VERSION}`;
 const PAGES_CACHE = `edenisystem-pages-${VERSION}`;
 
@@ -79,7 +79,7 @@ self.addEventListener("fetch", (event) => {
   // We only want to handle same-origin requests.
   if (url.origin !== self.location.origin) return;
 
-  // 1) Cache-first for static assets
+  // 1) Cache-first for static assets (hashed by Next.js, so safe to cache)
   if (isStaticAsset(request)) {
     event.respondWith(
       (async () => {
@@ -87,8 +87,7 @@ self.addEventListener("fetch", (event) => {
         const cached = await cache.match(request);
         if (cached) return cached;
 
-        const res = await fetch(request);
-        // Only cache successful responses.
+        const res = await fetch(request, { cache: "no-store" });
         if (res.ok) cache.put(request, res.clone());
         return res;
       })()
@@ -96,18 +95,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2) Network-first for navigations (HTML documents)
+  // 2) Network-first for navigations (HTML documents) — always fetch fresh
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
-        const cache = await caches.open(PAGES_CACHE);
         try {
-          const res = await fetch(request);
-          if (res.ok) cache.put(request, res.clone());
-          return res;
+          return await fetch(request, { cache: "no-store" });
         } catch {
-          const cached = await cache.match(request);
-          if (cached) return cached;
+          const cache = await caches.open(PAGES_CACHE);
           const offline = await cache.match("/offline");
           return offline || new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html" } });
         }
@@ -116,18 +111,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3) Default (API and other GETs): Network-first
+  // 3) Default (API and other GETs): always fetch fresh
   event.respondWith(
     (async () => {
-      const cache = await caches.open(PAGES_CACHE);
       try {
-        const res = await fetch(request);
-        if (res.ok) cache.put(request, res.clone());
-        return res;
+        return await fetch(request, { cache: "no-store" });
       } catch {
-        const cached = await cache.match(request);
-        if (cached) return cached;
-        throw new TypeError("Network request failed and no cache available");
+        throw new TypeError("Network request failed");
       }
     })()
   );

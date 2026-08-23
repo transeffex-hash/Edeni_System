@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
 from backend.app.core.db import get_db
-from backend.app.models.entities import User, UserRole
+from backend.app.models.entities import Business, User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
@@ -24,16 +24,29 @@ def get_current_user(
         sub: str | None = payload.get("sub")
         if not sub:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        try:
+            user_id = int(sub)
+        except (TypeError, ValueError) as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
     except JWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
 
-    user = db.query(User).filter(User.id == int(sub)).first()
+    user = db.query(User).filter(User.id == user_id).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    business = db.query(Business).filter(Business.id == user.business_id).first()
+    if not business or not business.is_active or business.is_deleted:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
     return user
 
 
 def require_boss(user: User = Depends(get_current_user)) -> User:
     if user.role != UserRole.boss:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Boss role required")
+    return user
+
+
+def require_super_boss(user: User = Depends(require_boss)) -> User:
+    if user.branch_id is not None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Super boss role required")
     return user

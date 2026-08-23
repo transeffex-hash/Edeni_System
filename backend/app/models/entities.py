@@ -17,6 +17,7 @@ class Business(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     phone_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
     phone_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -26,6 +27,20 @@ class Business(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     users: Mapped[list["User"]] = relationship(back_populates="business")
+    branches: Mapped[list["Branch"]] = relationship(back_populates="business")
+    customers: Mapped[list["Customer"]] = relationship(back_populates="business")
+
+
+class Branch(Base):
+    __tablename__ = "branches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    business: Mapped[Business] = relationship(back_populates="branches")
 
 
 class User(Base):
@@ -33,6 +48,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     email_enc: Mapped[str] = mapped_column(String(500), nullable=False)
     email_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
@@ -49,8 +65,9 @@ class DeviceToken(Base):
     __tablename__ = "device_tokens"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
-    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id"), nullable=True, index=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     token: Mapped[str] = mapped_column(String(512), unique=True, index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
@@ -77,11 +94,13 @@ class ProductUnit(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     # Example: base unit = "piece" (factor=1), carton = 300 pieces (factor=300)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     factor_to_base: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_base: Mapped[bool] = mapped_column(Boolean, default=False)
+    selling_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
@@ -94,6 +113,7 @@ class StockBatch(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     cost_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
@@ -107,19 +127,47 @@ class PaymentMethod(str, enum.Enum):
     momo = "momo"
 
 
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+
+    name_enc: Mapped[str] = mapped_column(String(500), nullable=False)
+    name_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    phone_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    phone_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    business: Mapped[Business] = relationship(back_populates="customers")
+
+    __table_args__ = (
+        Index("ix_customer_bus_name_hash", "business_id", "name_hash", unique=True),
+    )
+
+
 class Sale(Base):
     __tablename__ = "sales"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
 
     payment_method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
     is_credit: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_voided: Mapped[bool] = mapped_column(Boolean, default=False)
+    voided_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    void_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     customer_name_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     total_amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
 
     items: Mapped[list["SaleItem"]] = relationship(back_populates="sale")
 
@@ -131,6 +179,7 @@ class SaleItem(Base):
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
     sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id"), nullable=False, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     # Stored in base units (integer) for correct stock deduction.
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -139,6 +188,7 @@ class SaleItem(Base):
     display_quantity: Mapped[float | None] = mapped_column(Numeric(12, 3), nullable=True)
     unit_price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     line_total: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    cost_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
 
@@ -155,10 +205,12 @@ class LedgerEntry(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     ledger_type: Mapped[LedgerType] = mapped_column(Enum(LedgerType), nullable=False)
     party_name_enc: Mapped[str] = mapped_column(String(500), nullable=False)
     party_name_hash: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.id"), nullable=True, index=True)
 
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)

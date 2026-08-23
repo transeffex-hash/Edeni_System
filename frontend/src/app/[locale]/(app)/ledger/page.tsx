@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 import { apiGet } from "@/lib/api";
 
@@ -10,6 +10,7 @@ type Balance = { party_name: string; balance: number };
 
 export default function LedgerHomePage() {
   const t = useTranslations();
+  const locale = useLocale();
   const [type, setType] = useState<"customer" | "supplier">("customer");
   const [rows, setRows] = useState<Balance[]>([]);
   const [offset, setOffset] = useState(0);
@@ -40,41 +41,39 @@ export default function LedgerHomePage() {
   }, [type]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{t("ledger.title")}</h1>
-        <select className="border rounded px-3 py-2" value={type} onChange={(e) => setType(e.target.value as any)}>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="app-page-title">{t("ledger.title")}</h1>
+        <select className="app-input w-auto" value={type} onChange={(e) => setType(e.target.value as any)}>
           <option value="customer">{t("ledger.customer")}</option>
           <option value="supplier">{t("ledger.supplier")}</option>
         </select>
       </div>
 
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-500">
         {t("ledger.hint")}
       </div>
 
       {error ? <div className="text-sm text-red-600">{error}</div> : null}
 
-      <div className="border rounded divide-y">
+      <div className="app-card overflow-hidden">
         {rows.map((r) => (
           <Link
             key={r.party_name}
-            className="block p-3 hover:bg-gray-50"
-            href={`/ledger/${type}/${encodeURIComponent(r.party_name)}`}
+            className="app-list-row"
+            href={`/${locale}/ledger/${type}/${encodeURIComponent(r.party_name)}`}
           >
-            <div className="flex items-center justify-between">
-              <div className="font-medium">{r.party_name}</div>
-              <div className="text-sm">{r.balance.toFixed(2)}</div>
-            </div>
+            <div className="font-medium text-gray-800">{r.party_name}</div>
+            <div className={`text-sm font-semibold ${r.balance > 0 ? "text-red-600" : "text-green-600"}`}>{r.balance.toFixed(2)}</div>
           </Link>
         ))}
-        {rows.length === 0 ? <div className="p-3 text-sm">{t("ledger.noEntries")}</div> : null}
+        {rows.length === 0 ? <div className="p-5 text-sm text-gray-500 text-center">{t("ledger.noEntries")}</div> : null}
         {hasMore && rows.length > 0 && (
-          <div className="p-3 border-t text-center">
+          <div className="p-3 border-t border-black/5 text-center">
             <button 
               type="button" 
               onClick={() => load(false)} 
-              className="text-sm px-4 py-2 border rounded hover:bg-gray-50"
+              className="app-btn-ghost"
             >
               {t("common.loadMore") || "Load More"}
             </button>
@@ -82,9 +81,9 @@ export default function LedgerHomePage() {
         )}
       </div>
 
-      <div className="border rounded p-3">
-        <div className="font-medium">{t("ledger.quickActions")}</div>
-        <div className="mt-2 text-sm text-gray-600">
+      <div className="app-card p-4">
+        <div className="font-semibold text-sm text-gray-800">{t("ledger.quickActions")}</div>
+        <div className="mt-1.5 text-sm text-gray-500">
           {t("ledger.quickActionsHint")}
         </div>
       </div>

@@ -1,13 +1,21 @@
 import { create } from "zustand";
 
-import { apiGet } from "./api";
+import { apiGet, API_BASE } from "./api";
 
-type Me = { id: number; email: string; role: "boss" | "user" };
+type Me = {
+  id: number;
+  email: string;
+  role: "boss" | "user";
+  branch_id: number | null;
+  business_name?: string | null;
+  business_logo_url?: string | null;
+};
 
 type AuthState = {
   me: Me | null;
   loading: boolean;
   refreshMe: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
   clear: () => void;
 };
 
@@ -32,6 +40,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ me, loading: false });
     } catch {
       set({ me: null, loading: false });
+    }
+  },
+
+  logout: async (redirectTo = "/login") => {
+    try {
+      await fetch(API_BASE + "/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore network errors
+    }
+    set({ me: null });
+    if (typeof window !== "undefined") {
+      // Replace current history entry so the protected page is not in the back stack
+      window.location.replace(redirectTo);
     }
   },
 

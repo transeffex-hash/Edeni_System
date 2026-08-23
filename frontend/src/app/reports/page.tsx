@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 import { apiGet } from "@/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
-type ReportType = "sales" | "products" | "customers" | "suppliers" | "expiry" | "profit" | "cashflow";
+type ReportType = "sales" | "products" | "customers" | "suppliers" | "expiry" | "profit" | "cashflow" | "overdue" | "voided";
 
 type SalesRow = { date: string; cash: number; momo: number; credit: number; total: number; count: number };
 type ProductRow = { product_id: number; name: string; qty_sold: number; revenue: number; tx_count: number };
@@ -15,8 +15,12 @@ type BalanceRow = { name: string; balance: number };
 type ExpiryRow = { batch_id: number; product_name: string; quantity: number; expiry_date: string; days_left: number; urgency: string };
 type ProfitRow = { product_id: number; name: string; revenue: number; cogs: number; profit: number; qty_sold: number };
 type CashRow = { date: string; cash_sales: number; momo_sales: number; credit_sales: number; payments_received: number; net: number };
+type OverdueRow = { sale_id: number; customer_name: string; total_amount: number; due_date: string; days_overdue: number };
+type VoidedRow = { sale_id: number; customer_name: string; total_amount: number; payment_method: string; is_credit: boolean; voided_by_email: string | null; voided_at: string | null; void_reason: string | null; created_at: string };
 
-type ReportData = SalesRow[] | ProductRow[] | BalanceRow[] | ExpiryRow[] | ProfitRow[] | CashRow[] | null;
+type SoldProductRow = { product_id: number; name: string; qty_sold: number; revenue: number };
+
+type ReportData = SalesRow[] | ProductRow[] | BalanceRow[] | ExpiryRow[] | ProfitRow[] | CashRow[] | OverdueRow[] | VoidedRow[] | null;
 
 // ── Helper: Export CSV ────────────────────────────────────────────────
 
@@ -44,8 +48,8 @@ const urgencyColors: Record<string, string> = {
 
 // ── Report type config ─────────────────────────────────────────────────
 
-const REPORT_TYPES: ReportType[] = ["sales", "products", "customers", "suppliers", "expiry", "profit", "cashflow"];
-const DATE_RANGE_TYPES: ReportType[] = ["sales", "products", "profit", "cashflow"];
+const REPORT_TYPES: ReportType[] = ["sales", "products", "customers", "suppliers", "expiry", "profit", "cashflow", "overdue", "voided"];
+const DATE_RANGE_TYPES: ReportType[] = ["sales", "products", "customers", "suppliers", "expiry", "profit", "cashflow", "overdue", "voided"];
 
 // ── Main component ─────────────────────────────────────────────────────
 
@@ -59,19 +63,34 @@ export default function ReportsPage() {
   const [data, setData] = useState<ReportData>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatedAt, setGeneratedAt] = useState("");
+  const [soldProducts, setSoldProducts] = useState<SoldProductRow[]>([]);
+  const [activeInPeriod, setActiveInPeriod] = useState(false);
+  const [includeSettled, setIncludeSettled] = useState(false);
+
+  const isBalanceReport = reportType === "customers" || reportType === "suppliers";
+
+  useEffect(() => {
+    setGeneratedAt(new Date().toLocaleString());
+  }, []);
 
   async function runReport() {
     setLoading(true);
     setError(null);
     setData(null);
+    setSoldProducts([]);
     try {
       let url = `/api/reports/${reportType}`;
       if (DATE_RANGE_TYPES.includes(reportType)) {
         url += `?start_date=${encodeURIComponent(startDate + "T00:00:00Z")}&end_date=${encodeURIComponent(endDate + "T23:59:59Z")}`;
       }
+      if (isBalanceReport) {
+        url += `&active_in_period=${activeInPeriod}&include_settled=${includeSettled}`;
+      }
       const result = await apiGet<any>(url);
       // sales/cashflow return { rows, total, count } — unwrap rows
       setData(result?.rows ?? result);
+      setSoldProducts(Array.isArray(result?.products) ? result.products : []);
     } catch (e: any) {
       setError(e?.message ?? t("errors.failedToLoad"));
     } finally {
@@ -90,26 +109,26 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Print-only title */}
       <div className="hidden print:block text-center mb-4">
         <h2 className="text-xl font-bold">{t(`reports.types.${reportType}`)}</h2>
-        <p className="text-sm text-gray-500">{t("reports.generatedOn")} {new Date().toLocaleString()}</p>
+        <p className="text-sm text-gray-500">{t("reports.generatedOn")} {generatedAt}</p>
       </div>
 
       {/* Controls (hidden when printing) */}
-      <div className="print:hidden space-y-4">
-        <h1 className="text-xl font-semibold">{t("reports.title")}</h1>
+      <div className="print:hidden space-y-5">
+        <h1 className="app-page-title">{t("reports.title")}</h1>
 
-        <div className="border rounded p-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="app-card p-5 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {/* Report type */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium">{t("reports.type")}</label>
+            <div className="space-y-1.5">
+              <label className="app-label">{t("reports.type")}</label>
               <select
-                className="w-full border rounded px-3 py-2"
+                className="app-input"
                 value={reportType}
-                onChange={(e) => { setReportType(e.target.value as ReportType); setData(null); }}
+                onChange={(e) => { setReportType(e.target.value as ReportType); setData(null); setSoldProducts([]); }}
               >
                 {REPORT_TYPES.map((r) => (
                   <option key={r} value={r}>{t(`reports.types.${r}`)}</option>
@@ -120,20 +139,20 @@ export default function ReportsPage() {
             {/* Date range (only for applicable types) */}
             {DATE_RANGE_TYPES.includes(reportType) && (
               <>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">{t("analytics.start")}</label>
+                <div className="space-y-1.5">
+                  <label className="app-label">{t("analytics.start")}</label>
                   <input
                     type="date"
-                    className="w-full border rounded px-3 py-2"
+                    className="app-input"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">{t("analytics.end")}</label>
+                <div className="space-y-1.5">
+                  <label className="app-label">{t("analytics.end")}</label>
                   <input
                     type="date"
-                    className="w-full border rounded px-3 py-2"
+                    className="app-input"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                   />
@@ -141,9 +160,32 @@ export default function ReportsPage() {
               </>
             )}
 
+            {isBalanceReport && (
+              <div className="col-span-1 sm:col-span-2 md:col-span-4 flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={activeInPeriod}
+                    onChange={(e) => setActiveInPeriod(e.target.checked)}
+                  />
+                  {t("reports.activeInPeriod")}
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={includeSettled}
+                    onChange={(e) => setIncludeSettled(e.target.checked)}
+                  />
+                  {t("reports.includeSettled")}
+                </label>
+              </div>
+            )}
+
             <div className="flex items-end">
               <button
-                className="w-full px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+                className="app-btn-primary w-full disabled:opacity-50"
                 onClick={runReport}
                 disabled={loading}
                 type="button"
@@ -159,14 +201,14 @@ export default function ReportsPage() {
         {data && Array.isArray(data) && (
           <div className="flex gap-2 flex-wrap">
             <button
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="app-btn-ghost"
               onClick={handlePrint}
               type="button"
             >
               🖨 {t("reports.print")}
             </button>
             <button
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="app-btn-ghost"
               onClick={handleExcelExport}
               type="button"
             >
@@ -178,7 +220,7 @@ export default function ReportsPage() {
 
       {/* Report table */}
       {data && Array.isArray(data) && (
-        <div className="border rounded overflow-x-auto">
+        <div className="app-card overflow-x-auto">
           {reportType === "sales" && <SalesTable rows={data as SalesRow[]} t={t} />}
           {reportType === "products" && <ProductsTable rows={data as ProductRow[]} t={t} />}
           {reportType === "customers" && <BalanceTable rows={data as BalanceRow[]} t={t} type="customer" />}
@@ -186,11 +228,20 @@ export default function ReportsPage() {
           {reportType === "expiry" && <ExpiryTable rows={data as ExpiryRow[]} t={t} />}
           {reportType === "profit" && <ProfitTable rows={data as ProfitRow[]} t={t} />}
           {reportType === "cashflow" && <CashflowTable rows={data as CashRow[]} t={t} />}
+          {reportType === "overdue" && <OverdueTable rows={data as OverdueRow[]} t={t} />}
+          {reportType === "voided" && <VoidedTable rows={data as VoidedRow[]} t={t} />}
+        </div>
+      )}
+
+      {reportType === "sales" && soldProducts.length > 0 && (
+        <div className="app-card overflow-x-auto">
+          <div className="px-4 pt-4 text-sm font-semibold text-gray-700">{t("reports.productsSold")}</div>
+          <SoldProductsTable rows={soldProducts} t={t} />
         </div>
       )}
 
       {data && Array.isArray(data) && data.length === 0 && (
-        <div className="border rounded p-6 text-center text-sm text-gray-500">{t("reports.noData")}</div>
+        <div className="app-card p-8 text-center text-sm text-gray-500">{t("reports.noData")}</div>
       )}
     </div>
   );
@@ -199,10 +250,10 @@ export default function ReportsPage() {
 // ── Sub-tables ────────────────────────────────────────────────────────
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th className="p-3 text-left font-medium whitespace-nowrap">{children}</th>;
+  return <th className="whitespace-nowrap text-left">{children}</th>;
 }
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`p-3 whitespace-nowrap ${className}`}>{children}</td>;
+function Td({ children, className = "", colSpan }: { children: React.ReactNode; className?: string; colSpan?: number }) {
+  return <td className={`whitespace-nowrap ${className}`} colSpan={colSpan}>{children}</td>;
 }
 function fmt(n: number) { return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -216,8 +267,8 @@ function SalesTable({ rows, t }: { rows: SalesRow[]; t: any }) {
   }), { cash: 0, momo: 0, credit: 0, total: 0, count: 0 });
 
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{t("reports.col.date")}</Th>
           <Th>{t("reports.col.cash")}</Th>
@@ -227,9 +278,9 @@ function SalesTable({ rows, t }: { rows: SalesRow[]; t: any }) {
           <Th>{t("reports.col.count")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r) => (
-          <tr key={r.date} className="hover:bg-gray-50">
+          <tr key={r.date}>
             <Td>{r.date}</Td>
             <Td>{fmt(r.cash)}</Td>
             <Td>{fmt(r.momo)}</Td>
@@ -239,7 +290,7 @@ function SalesTable({ rows, t }: { rows: SalesRow[]; t: any }) {
           </tr>
         ))}
       </tbody>
-      <tfoot className="border-t bg-gray-50 font-semibold">
+      <tfoot>
         <tr>
           <Td>{t("reports.col.total")}</Td>
           <Td>{fmt(totals.cash)}</Td>
@@ -255,8 +306,8 @@ function SalesTable({ rows, t }: { rows: SalesRow[]; t: any }) {
 
 function ProductsTable({ rows, t }: { rows: ProductRow[]; t: any }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{t("reports.col.product")}</Th>
           <Th>{t("reports.col.qtySold")}</Th>
@@ -264,9 +315,9 @@ function ProductsTable({ rows, t }: { rows: ProductRow[]; t: any }) {
           <Th>{t("reports.col.transactions")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r) => (
-          <tr key={r.product_id} className="hover:bg-gray-50">
+          <tr key={r.product_id}>
             <Td className="font-medium">{r.name}</Td>
             <Td>{r.qty_sold.toLocaleString()}</Td>
             <Td>{fmt(r.revenue)}</Td>
@@ -278,23 +329,53 @@ function ProductsTable({ rows, t }: { rows: ProductRow[]; t: any }) {
   );
 }
 
+function SoldProductsTable({ rows, t }: { rows: SoldProductRow[]; t: any }) {
+  const totalRevenue = rows.reduce((acc, r) => acc + r.revenue, 0);
+  return (
+    <table className="app-table">
+      <thead>
+        <tr>
+          <Th>{t("reports.col.product")}</Th>
+          <Th>{t("reports.col.qtySold")}</Th>
+          <Th>{t("reports.col.revenue")}</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.product_id}>
+            <Td className="font-medium">{r.name}</Td>
+            <Td>{r.qty_sold.toLocaleString()}</Td>
+            <Td>{fmt(r.revenue)}</Td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <Td colSpan={2}>{t("reports.col.total")}</Td>
+          <Td>{fmt(totalRevenue)}</Td>
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
 function BalanceTable({ rows, t, type }: { rows: BalanceRow[]; t: any; type: string }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{type === "customer" ? t("ledger.customer") : t("ledger.supplier")}</Th>
           <Th>{t("reports.col.balance")}</Th>
           <Th>{t("reports.col.status")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r, i) => (
-          <tr key={i} className="hover:bg-gray-50">
+          <tr key={i}>
             <Td className="font-medium">{r.name}</Td>
             <Td className={r.balance > 0 ? "text-red-600" : "text-green-600"}>{fmt(r.balance)}</Td>
             <Td>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.balance > 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+              <span className={`app-badge ${r.balance > 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
                 {r.balance > 0 ? t("reports.col.owes") : t("reports.col.settled")}
               </span>
             </Td>
@@ -307,8 +388,8 @@ function BalanceTable({ rows, t, type }: { rows: BalanceRow[]; t: any; type: str
 
 function ExpiryTable({ rows, t }: { rows: ExpiryRow[]; t: any }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{t("reports.col.product")}</Th>
           <Th>{t("reports.col.quantity")}</Th>
@@ -317,15 +398,15 @@ function ExpiryTable({ rows, t }: { rows: ExpiryRow[]; t: any }) {
           <Th>{t("reports.col.urgency")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r) => (
-          <tr key={r.batch_id} className="hover:bg-gray-50">
+          <tr key={r.batch_id}>
             <Td className="font-medium">{r.product_name}</Td>
             <Td>{r.quantity.toLocaleString()}</Td>
             <Td>{r.expiry_date}</Td>
             <Td>{r.days_left < 0 ? t("reports.col.expired") : r.days_left}</Td>
             <Td>
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${urgencyColors[r.urgency]}`}>
+              <span className={`app-badge ${urgencyColors[r.urgency]}`}>
                 {t(`reports.urgency.${r.urgency}`)}
               </span>
             </Td>
@@ -344,8 +425,8 @@ function ProfitTable({ rows, t }: { rows: ProfitRow[]; t: any }) {
   }), { revenue: 0, cogs: 0, profit: 0 });
 
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{t("reports.col.product")}</Th>
           <Th>{t("reports.col.qtySold")}</Th>
@@ -354,9 +435,9 @@ function ProfitTable({ rows, t }: { rows: ProfitRow[]; t: any }) {
           <Th>{t("reports.col.profit")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r) => (
-          <tr key={r.product_id} className="hover:bg-gray-50">
+          <tr key={r.product_id}>
             <Td className="font-medium">{r.name}</Td>
             <Td>{r.qty_sold.toLocaleString()}</Td>
             <Td>{fmt(r.revenue)}</Td>
@@ -365,12 +446,78 @@ function ProfitTable({ rows, t }: { rows: ProfitRow[]; t: any }) {
           </tr>
         ))}
       </tbody>
-      <tfoot className="border-t bg-gray-50 font-semibold">
+      <tfoot>
         <tr>
           <Td colSpan={2}>{t("reports.col.total")}</Td>
           <Td>{fmt(totals.revenue)}</Td>
           <Td>{fmt(totals.cogs)}</Td>
           <Td className={totals.profit >= 0 ? "text-green-600" : "text-red-600"}>{fmt(totals.profit)}</Td>
+        </tr>
+      </tfoot>
+    </table>
+  );
+}
+
+function OverdueTable({ rows, t }: { rows: OverdueRow[]; t: any }) {
+  return (
+    <table className="app-table">
+      <thead>
+        <tr>
+          <Th>{t("reports.col.saleId")}</Th>
+          <Th>{t("reports.col.customer")}</Th>
+          <Th>{t("reports.col.total")}</Th>
+          <Th>{t("reports.col.dueDate")}</Th>
+          <Th>{t("reports.col.daysOverdue")}</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.sale_id}>
+            <Td className="font-medium">#{r.sale_id}</Td>
+            <Td>{r.customer_name || "—"}</Td>
+            <Td>{fmt(r.total_amount)}</Td>
+            <Td>{r.due_date}</Td>
+            <Td className="text-red-600 font-medium">{r.days_overdue}</Td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function VoidedTable({ rows, t }: { rows: VoidedRow[]; t: any }) {
+  const totalAmount = rows.reduce((acc, r) => acc + r.total_amount, 0);
+  return (
+    <table className="app-table">
+      <thead>
+        <tr>
+          <Th>{t("reports.col.saleId")}</Th>
+          <Th>{t("reports.col.customer")}</Th>
+          <Th>{t("reports.col.total")}</Th>
+          <Th>{t("reports.col.paymentMethod")}</Th>
+          <Th>{t("reports.col.voidedBy")}</Th>
+          <Th>{t("reports.col.voidedAt")}</Th>
+          <Th>{t("reports.col.reason")}</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.sale_id}>
+            <Td className="font-medium">#{r.sale_id}</Td>
+            <Td>{r.customer_name || "—"}</Td>
+            <Td className="text-red-600">{fmt(r.total_amount)}</Td>
+            <Td>{r.payment_method.toUpperCase()}{r.is_credit ? " (CREDIT)" : ""}</Td>
+            <Td>{r.voided_by_email || "—"}</Td>
+            <Td className="text-gray-500">{r.voided_at ? new Date(r.voided_at).toLocaleString() : "—"}</Td>
+            <Td>{r.void_reason || "—"}</Td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <Td colSpan={2}>{t("reports.col.total")}</Td>
+          <Td className="text-red-600">{fmt(totalAmount)}</Td>
+          <Td colSpan={4}></Td>
         </tr>
       </tfoot>
     </table>
@@ -387,8 +534,8 @@ function CashflowTable({ rows, t }: { rows: CashRow[]; t: any }) {
   }), { cash_sales: 0, momo_sales: 0, credit_sales: 0, payments_received: 0, net: 0 });
 
   return (
-    <table className="w-full text-sm">
-      <thead className="bg-gray-50 border-b">
+    <table className="app-table">
+      <thead>
         <tr>
           <Th>{t("reports.col.date")}</Th>
           <Th>{t("reports.col.cash")}</Th>
@@ -398,9 +545,9 @@ function CashflowTable({ rows, t }: { rows: CashRow[]; t: any }) {
           <Th>{t("reports.col.netCash")}</Th>
         </tr>
       </thead>
-      <tbody className="divide-y">
+      <tbody>
         {rows.map((r) => (
-          <tr key={r.date} className="hover:bg-gray-50">
+          <tr key={r.date}>
             <Td>{r.date}</Td>
             <Td>{fmt(r.cash_sales)}</Td>
             <Td>{fmt(r.momo_sales)}</Td>
@@ -410,7 +557,7 @@ function CashflowTable({ rows, t }: { rows: CashRow[]; t: any }) {
           </tr>
         ))}
       </tbody>
-      <tfoot className="border-t bg-gray-50 font-semibold">
+      <tfoot>
         <tr>
           <Td>{t("reports.col.total")}</Td>
           <Td>{fmt(totals.cash_sales)}</Td>

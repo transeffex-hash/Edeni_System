@@ -1,22 +1,29 @@
-from datetime import datetime
+from datetime import datetime, time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.app.api.deps import get_current_user
 from backend.app.core.db import get_db
 from backend.app.core.pii_crypto import pii_decrypt, pii_encrypt, pii_hash
-from backend.app.core.push import send_push
+from backend.app.core.push import enqueue_push
 from backend.app.models.entities import DeviceToken, LedgerEntry, LedgerType, User, UserRole
 from backend.app.schemas.ledger import LedgerEntryCreate, LedgerEntryOut, LedgerPartyBalance, LedgerStatementOut
 
 router = APIRouter()
 
 
+def _end_of_day(end_date: datetime | None) -> datetime | None:
+    if end_date and end_date.time() == time.min:
+        return end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return end_date
+
+
 @router.post("/entries", response_model=LedgerEntryOut)
 def create_entry(
     payload: LedgerEntryCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -27,6 +34,7 @@ def create_entry(
 
     entry = LedgerEntry(
         business_id=user.business_id,
+        branch_id=user.branch_id,
         ledger_type=payload.ledger_type,
         party_name_enc=pii_encrypt(payload.party_name) or "",
         party_name_hash=pii_hash(payload.party_name),
@@ -51,7 +59,7 @@ def create_entry(
             else []
         )
         if tokens:
-            send_push(tokens, title="Payment Received", body=f"Customer {payload.party_name} paid {abs(float(payload.amount)):.2f}.")
+            enqueue_push(background_tasks, tokens, title="Payment Received", body=f"Customer {payload.party_name} paid {abs(float(payload.amount)):.2f}.")
 
     return LedgerEntryOut(
         id=entry.id,
@@ -76,6 +84,8 @@ def list_entries(
         .filter(LedgerEntry.ledger_type == ledger_type)
         .order_by(LedgerEntry.created_at.desc())
     )
+    if user.branch_id is not None:
+        q = q.filter(LedgerEntry.branch_id == user.branch_id)
 
     if party_name:
         q = q.filter(LedgerEntry.party_name_hash == pii_hash(party_name))
@@ -107,11 +117,15 @@ def balances(
     offset = max(0, int(offset))
 
     # Returns a quick balance view: total per party.
-    rows = (
+    base_q = (
         db.query(LedgerEntry.party_name_hash, func.sum(LedgerEntry.amount))
         .filter(LedgerEntry.business_id == user.business_id)
         .filter(LedgerEntry.ledger_type == ledger_type)
-        .group_by(LedgerEntry.party_name_hash)
+    )
+    if user.branch_id is not None:
+        base_q = base_q.filter(LedgerEntry.branch_id == user.branch_id)
+    rows = (
+        base_q.group_by(LedgerEntry.party_name_hash)
         .order_by(func.sum(LedgerEntry.amount).desc())
         .offset(offset)
         .limit(limit)
@@ -156,25 +170,27 @@ def statement(
     # 1. Opening balance: sum of entries before start_date
     opening_balance = 0.0
     if start_date:
-        ob_result = (
+        ob_q = (
             db.query(func.sum(LedgerEntry.amount))
             .filter(LedgerEntry.business_id == user.business_id)
             .filter(LedgerEntry.ledger_type == ledger_type)
             .filter(LedgerEntry.party_name_hash == party_hash)
             .filter(LedgerEntry.created_at < start_date)
-            .scalar()
         )
-        opening_balance = float(ob_result or 0.0)
+        if user.branch_id is not None:
+            ob_q = ob_q.filter(LedgerEntry.branch_id == user.branch_id)
+        opening_balance = float(ob_q.scalar() or 0.0)
 
     # 2. Outstanding balance: sum of all entries ever
-    out_result = (
+    out_q = (
         db.query(func.sum(LedgerEntry.amount))
         .filter(LedgerEntry.business_id == user.business_id)
         .filter(LedgerEntry.ledger_type == ledger_type)
         .filter(LedgerEntry.party_name_hash == party_hash)
-        .scalar()
     )
-    outstanding_balance = float(out_result or 0.0)
+    if user.branch_id is not None:
+        out_q = out_q.filter(LedgerEntry.branch_id == user.branch_id)
+    outstanding_balance = float(out_q.scalar() or 0.0)
 
     # 3. Entries within date range
     q = (
@@ -183,12 +199,13 @@ def statement(
         .filter(LedgerEntry.ledger_type == ledger_type)
         .filter(LedgerEntry.party_name_hash == party_hash)
     )
+    if user.branch_id is not None:
+        q = q.filter(LedgerEntry.branch_id == user.branch_id)
     if start_date:
         q = q.filter(LedgerEntry.created_at >= start_date)
-    # Compute skip sum for offset (which means we skipped NEWER entries, so we are fetching OLDER entries)
-    # Wait, if we order by desc, offset 0 is newest.
-    rows = q.order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc()).offset(offset).limit(limit).all()
-    rows.reverse() # now in ascending order (oldest first in this batch)
+    if end_date:
+        q = q.filter(LedgerEntry.created_at <= _end_of_day(end_date))
+    rows = q.order_by(LedgerEntry.created_at.asc(), LedgerEntry.id.asc()).offset(offset).limit(limit).all()
 
     skip_sum = 0.0
     if rows:
@@ -224,9 +241,6 @@ def statement(
                 running_balance=current_balance,
             )
         )
-
-    # Reverse to return newest first
-    entries_out.reverse()
 
     return LedgerStatementOut(
         opening_balance=opening_balance,

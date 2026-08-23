@@ -45,7 +45,8 @@ async function fetchWithRefresh(url: string, options: RequestInit): Promise<Resp
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetchWithRefresh(API_BASE + path, {
     method: "GET",
-    credentials: "include"
+    credentials: "include",
+    cache: "no-store",
   });
 
   if (!res.ok) throw await parseError(res);

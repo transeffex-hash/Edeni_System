@@ -78,6 +78,208 @@ body {
   animation: floatSoft 6s ease-in-out infinite;
 }
 
+/* ── App design system ─────────────────────────────────────────────── */
+
+.app-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.app-page-title {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.app-page-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.app-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.app-input {
+  width: 100%;
+  border: 1.5px solid #e2e2e2;
+  border-radius: 0.65rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Number inputs: disable scroll-to-change and hide spinners */
+.app-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.app-input[type="number"]::-webkit-inner-spin-button,
+.app-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.app-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.app-btn-primary:hover {
+  background: #096657;
+}
+
+.app-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.app-btn-outline:hover {
+  background: rgba(10, 126, 107, 0.08);
+}
+
+.app-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  border: 1px solid #e2e2e2;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.85rem;
+  background: #fff;
+  transition: background 0.15s ease;
+}
+
+.app-btn-ghost:hover {
+  background: #f4f4f4;
+}
+
+.app-nav-link {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4b5563;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.app-nav-link:hover {
+  background: rgba(10, 126, 107, 0.08);
+  color: var(--accent);
+}
+
+.app-nav-link-active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.app-table {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.app-table thead {
+  background: #f6f7f8;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.app-table th {
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.app-table td {
+  padding: 0.65rem 0.9rem;
+  white-space: nowrap;
+}
+
+.app-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.app-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.app-table tfoot {
+  border-top: 2px solid #e5e7eb;
+  background: #f6f7f8;
+  font-weight: 700;
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.app-list-row {
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s ease;
+}
+
+.app-list-row:last-child {
+  border-bottom: none;
+}
+
+.app-list-row:hover {
+  background: #fafafa;
+}
+
 @media print {
   body {
     background: white;

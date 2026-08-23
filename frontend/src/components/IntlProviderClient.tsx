@@ -1,10 +1,10 @@
 "use client";
 
-import { IntlProvider } from "use-intl";
+import { IntlProvider, type AbstractIntlMessages } from "use-intl";
 
 type IntlProviderClientProps = {
   locale: string;
-  messages: Record<string, unknown>;
+  messages: AbstractIntlMessages;
   timeZone?: string;
   children: React.ReactNode;
 };

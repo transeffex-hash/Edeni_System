@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "use-intl";
 
 import { API_BASE } from "@/lib/api";
+import { useAuthStore } from "@/lib/authStore";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function LoginPage() {
   const t = useTranslations();
   const locale = useLocale();
-  const router = useRouter();
+  const refreshMe = useAuthStore((s) => s.refreshMe);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +22,18 @@ export default function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    if (!email.trim()) {
+      setError(`${t("auth.email")} ${t("errors.required")}`);
+      return;
+    }
+    if (!password) {
+      setError(`${t("auth.password")} ${t("errors.required")}`);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const form = new URLSearchParams();
@@ -39,10 +52,14 @@ export default function LoginPage() {
       }
 
       await res.json();
-      router.push(`/${locale}/dashboard`);
+
+      // Refresh auth state so the dashboard doesn't redirect back to login before the session cookie is recognized
+      await refreshMe();
+
+      // Hard navigation to dashboard to bust any stale page state and ensure the latest app loads
+      window.location.href = `/${locale}/dashboard`;
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.invalidCredentials"));
-    } finally {
       setLoading(false);
     }
   }

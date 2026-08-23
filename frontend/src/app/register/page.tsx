@@ -29,13 +29,30 @@ export default function RegisterPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+
+    if (!businessName.trim()) {
+      setError(`${t("auth.businessName")} ${t("errors.required")}`);
+      return;
+    }
+    if (!ownerEmail.trim()) {
+      setError(`${t("auth.ownerEmail")} ${t("errors.required")}`);
+      return;
+    }
+    if (!password) {
+      setError(`${t("auth.password")} ${t("errors.required")}`);
+      return;
+    }
+    if (!confirmPassword) {
+      setError(`${t("auth.confirmPassword")} ${t("errors.required")}`);
+      return;
+    }
     if (password !== confirmPassword) {
       setError(t("auth.passwordsNoMatch"));
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const payload: RegisterPayload = {
@@ -64,7 +81,7 @@ export default function RegisterPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-green-600 relative overflow-hidden">
         <div className="relative w-full h-full">
           <Image
-            src="/a wholesaler man selling stock edeni system.jpg"
+            src="/a woman in a car and seeing how her business is performing on her phone.png"
             alt="Wholesaler managing stock"
             fill
             sizes="50vw"

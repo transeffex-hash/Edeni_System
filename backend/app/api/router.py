@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from backend.app.api.routes import auth, users, inventory, sales, ledger, notifications, admin, reports, public
+from backend.app.api.routes import auth, users, inventory, sales, ledger, notifications, admin, reports, public, branches, customers
 
 api_router = APIRouter(prefix="/api")
 
@@ -13,3 +13,5 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(public.router, prefix="/public", tags=["public"])
+api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
+api_router.include_router(customers.router, prefix="/customers", tags=["customers"])

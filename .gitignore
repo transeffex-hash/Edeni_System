@@ -35,7 +35,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/backend/lib/
 lib64/
 parts/
 sdist/
@@ -64,3 +64,14 @@ Thumbs.db
 *.swo
 *~
 *.pem
+
+# Firebase service account keys
+*firebase*.json
+firebase-service-account*.json
+
+# Temp scripts
+reset_db.py
+test_connection.py
+check_schema.py
+_smoke_check.py
+smoke_check.py

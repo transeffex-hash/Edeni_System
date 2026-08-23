@@ -1,8 +1,14 @@
+import os
+from pathlib import Path
+
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=str(_ENV_FILE), env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "EdeniSystem API"
     env: str = "dev"
@@ -21,8 +27,21 @@ class Settings(BaseSettings):
     platform_admin_password: str | None = None
 
     database_url: str
+    database_url_clone: str | None = None
+
+    supabase_url: str | None = None
+    supabase_service_role_key: str | None = None
+
+    cron_secret: str | None = None
 
     cors_origins: str = "http://localhost:3000"
+
+    @computed_field
+    @property
+    def effective_database_url(self) -> str:
+        if os.environ.get("USE_CLONE_DB") == "true" and self.database_url_clone:
+            return self.database_url_clone
+        return self.database_url
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -12,3 +12,4 @@ cryptography
 firebase-admin
 slowapi
 certifi
+supabase
