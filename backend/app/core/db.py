@@ -6,6 +6,9 @@ from backend.app.core.config import settings
 
 def get_clean_database_url() -> str:
     url = settings.effective_database_url
+    # Use psycopg3 (not psycopg2) to match our dependencies
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
     if "sslrootcert=" in url:
         import urllib.parse
         parsed = urllib.parse.urlparse(url)
