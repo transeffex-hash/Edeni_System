@@ -11,10 +11,18 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
 messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.notification ?? {};
   self.registration.showNotification(title ?? "EdeniSystem", {
     body: body ?? "",
     icon: "/icon-192.png",
+    data: payload.data,
   });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const link = event.notification.data?.link ?? "/";
+  event.waitUntil(self.clients.openWindow(link));
 });

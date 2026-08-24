@@ -120,7 +120,7 @@
     "loggingIn": "Logging in...",
     "businessName": "Business name",
     "ownerEmail": "Owner email",
-    "phoneOptional": "Phone (optional)",
+    "phone": "Phone",
     "confirmPassword": "Confirm password",
     "passwordsNoMatch": "Passwords do not match",
     "creatingAccount": "Creating account...",

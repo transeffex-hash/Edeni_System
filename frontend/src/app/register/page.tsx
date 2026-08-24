@@ -12,7 +12,7 @@ type RegisterPayload = {
   business_name: string;
   owner_email: string;
   password: string;
-  phone?: string | null;
+  phone: string;
 };
 
 export default function RegisterPage() {
@@ -39,6 +39,10 @@ export default function RegisterPage() {
       setError(`${t("auth.ownerEmail")} ${t("errors.required")}`);
       return;
     }
+    if (!phone.trim()) {
+      setError(`${t("auth.phone")} ${t("errors.required")}`);
+      return;
+    }
     if (!password) {
       setError(`${t("auth.password")} ${t("errors.required")}`);
       return;
@@ -55,7 +59,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const payload: RegisterPayload = {
+      const payload: Registd = {
         business_name: businessName.trim(),
         owner_email: ownerEmail.trim(),
         password,
@@ -140,7 +144,8 @@ export default function RegisterPage() {
                 {t("auth.phoneOptional")}
               </label>
               <input
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full border-2 border-gray-3
+                required00 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 transition-colors"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 type="tel"

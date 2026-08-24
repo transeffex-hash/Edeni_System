@@ -86,16 +86,19 @@ def register(
 ):
     if not payload.business_name.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Business name is required")
+    if not payload.phone or not payload.phone.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone number is required")
 
     email_hash = pii_hash(payload.owner_email)
     existing = db.query(User).filter(User.email_hash == email_hash).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
 
+    phone_clean = payload.phone.strip()
     business = Business(
         name=payload.business_name.strip(),
-        phone_enc=pii_encrypt(payload.phone) if payload.phone else None,
-        phone_hash=pii_hash(payload.phone) if payload.phone else None,
+        phone_enc=pii_encrypt(phone_clean),
+        phone_hash=pii_hash(phone_clean),
     )
     db.add(business)
     db.flush()

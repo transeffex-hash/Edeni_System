@@ -120,7 +120,7 @@
     "loggingIn": "Turimo kwinjira...",
     "businessName": "Izina ry'ubucuruzi",
     "ownerEmail": "Imeri ya nyir'ubucuruzi",
-    "phoneOptional": "Telefoni (ntabwo ari ngombwa)",
+    "phone": "Telefoni",
     "confirmPassword": "Emeza ijambo banga",
     "passwordsNoMatch": "Amagambo banga ntahura",
     "creatingAccount": "Turimo gufungura konti...",

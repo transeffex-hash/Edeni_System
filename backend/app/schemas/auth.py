@@ -15,4 +15,4 @@ class RegisterRequest(BaseModel):
     business_name: str
     owner_email: EmailStr
     password: str
-    phone: str | None = None
+    phone: str
