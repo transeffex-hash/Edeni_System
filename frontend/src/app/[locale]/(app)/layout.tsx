@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "use-intl";
 
 import { useAuthStore } from "@/lib/authStore";
+import { API_BASE } from "@/lib/api";
 import OfflineSync from "@/components/OfflineSync";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 
@@ -58,7 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {me?.business_logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={me.business_logo_url}
+                src={me.business_logo_url.startsWith("http") ? me.business_logo_url : `${API_BASE}${me.business_logo_url}`}
                 alt={me.business_name ?? "Logo"}
                 width={36}
                 height={36}

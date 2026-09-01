@@ -52,7 +52,7 @@ def login(
     db: Session = Depends(get_db),
 ):
     email_hash = pii_hash(form_data.username)
-    user = db.query(User).filter(User.email_hash == email_hash).first()
+    user = db.query(User).filter(User.email_hash == email_hash, User.is_active == True).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     if not user.is_active:
@@ -90,7 +90,7 @@ def register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone number is required")
 
     email_hash = pii_hash(payload.owner_email)
-    existing = db.query(User).filter(User.email_hash == email_hash).first()
+    existing = db.query(User).filter(User.email_hash == email_hash, User.is_active == True).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
 

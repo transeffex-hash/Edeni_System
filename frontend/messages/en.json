@@ -455,7 +455,11 @@
     "save": "Save",
     "saving": "Saving...",
     "saved": "Profile saved",
-    "failedToSave": "Failed to save"
+    "failedToSave": "Failed to save",
+    "businessTitle": "Business details",
+    "logo": "Business logo",
+    "logoUploaded": "Logo uploaded",
+    "failedToUploadLogo": "Failed to upload logo"
   },
   "confirm": {
     "title": "Are you sure?",

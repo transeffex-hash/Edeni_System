@@ -51,7 +51,7 @@ class User(Base):
     branch_id: Mapped[int | None] = mapped_column(ForeignKey("branches.id"), nullable=True, index=True)
 
     email_enc: Mapped[str] = mapped_column(String(500), nullable=False)
-    email_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    email_hash: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

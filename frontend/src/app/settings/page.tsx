@@ -17,10 +17,22 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (me?.email) setEmail(me.email);
-  }, [me?.email]);
+    if (me?.business_name) setBusinessName(me.business_name);
+    setPhone(me?.business_phone || "");
+    setLogoUrl(
+      me?.business_logo_url
+        ? me.business_logo_url.startsWith("http")
+          ? me.business_logo_url
+          : `${API_BASE}${me.business_logo_url}`
+        : null
+    );
+  }, [me]);
 
   async function saveProfile() {
     setError(null);
@@ -56,6 +68,65 @@ export default function SettingsPage() {
       setSuccess(t("settings.saved"));
     } catch (e: any) {
       setError(e?.message ?? t("settings.failedToSave"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveBusiness() {
+    setError(null);
+    setSuccess(null);
+
+    const payload: any = {};
+    if (businessName.trim()) payload.business_name = businessName.trim();
+    if (phone.trim()) payload.phone = phone.trim();
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/users/business`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || t("settings.failedToSave"));
+      }
+      await refreshMe();
+      setSuccess(t("settings.saved"));
+    } catch (e: any) {
+      setError(e?.message ?? t("settings.failedToSave"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function uploadLogo(file: File | null) {
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_BASE}/api/users/logo`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || t("settings.failedToUploadLogo"));
+      }
+      const data = await res.json();
+      setLogoUrl(
+        data.logo_url.startsWith("http") ? data.logo_url : `${API_BASE}${data.logo_url}`
+      );
+      setSuccess(t("settings.logoUploaded"));
+      await refreshMe();
+    } catch (e: any) {
+      setError(e?.message ?? t("settings.failedToUploadLogo"));
     } finally {
       setLoading(false);
     }
@@ -107,6 +178,59 @@ export default function SettingsPage() {
         <button
           className="app-btn-primary"
           onClick={saveProfile}
+          disabled={loading}
+          type="button"
+        >
+          {loading ? t("settings.saving") : t("settings.save")}
+        </button>
+      </div>
+
+      <div className="app-card p-5 space-y-4">
+        <h2 className="text-lg font-semibold">{t("settings.businessTitle")}</h2>
+
+        <div className="space-y-1.5">
+          <label className="app-label">{t("auth.businessName")}</label>
+          <input
+            className="app-input"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder={t("auth.businessNamePlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="app-label">{t("auth.phone")}</label>
+          <input
+            className="app-input"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder={t("auth.phonePlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="app-label">{t("settings.logo")}</label>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            onChange={(e) => uploadLogo(e.target.files?.[0] ?? null)}
+            className="app-input"
+          />
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="logo"
+              className="h-16 object-contain mt-2"
+            />
+          )}
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-green-700">{success}</p>}
+
+        <button
+          className="app-btn-primary"
+          onClick={saveBusiness}
           disabled={loading}
           type="button"
         >

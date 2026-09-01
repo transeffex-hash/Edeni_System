@@ -458,6 +458,10 @@
   "settings": {
     "title": "Igenamiterere(setingi)",
     "hint": "Hindura imeri cyangwa ijambo ry'ibanga.",
+    "businessTitle": "Business details",
+    "logo": "Business logo",
+    "logoUploaded": "Logo uploaded",
+    "failedToUploadLogo": "Failed to upload logo",
     "passwordPlaceholder": "password",
     "save": "Emeza",
     "saving": "Birikwemezwa...",

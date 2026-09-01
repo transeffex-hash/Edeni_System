@@ -59,11 +59,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const payload: Registd = {
+      const payload: RegisterPayload = {
         business_name: businessName.trim(),
         owner_email: ownerEmail.trim(),
         password,
-        phone: phone.trim() || null
+        phone: phone.trim()
       };
 
       await apiPost("/api/auth/register", payload);

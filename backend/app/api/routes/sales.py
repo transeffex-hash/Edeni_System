@@ -92,13 +92,14 @@ def create_sale(
 
         product_ids = {item.product_id for item in payload.items}
 
-        product_names: dict[int, str] = {
-            p.id: p.name
-            for p in db.query(Product.id, Product.name)
+        product_rows = (
+            db.query(Product.id, Product.name, Product.unit)
             .filter(Product.business_id == user.business_id)
             .filter(Product.id.in_(product_ids))
             .all()
-        }
+        )
+        product_names: dict[int, str] = {p.id: p.name for p in product_rows}
+        product_default_units: dict[int, str | None] = {p.id: p.unit for p in product_rows}
 
         # Preload product units for all items
         all_units = (
@@ -170,7 +171,7 @@ def create_sale(
                 sale_id=sale.id,
                 product_id=item.product_id,
                 quantity=base_qty_int,
-                display_unit=unit_name,
+                display_unit=unit_name or (unit_row.name if unit_row else product_default_units.get(item.product_id)),
                 display_quantity=float(qty),
                 unit_price=float(resolved_price),
                 line_total=float(line_total),
@@ -560,7 +561,7 @@ def get_receipt(
         product_name = product.name if product else f"Product #{si.product_id}"
         qty_display = si.display_quantity if si.display_quantity else si.quantity
         unit_display = si.display_unit if si.display_unit else "unit"
-        items_html += f"<tr><td>{product_name}</td><td class='r'>{qty_display} {unit_display}</td><td class='r'>{float(si.unit_price):,.0f}</td><td class='r'>{float(si.line_total):,.0f}</td></tr>"
+        items_html += f"<tr><td class='product'>{product_name}</td><td class='r'>{qty_display} {unit_display}</td><td class='r'>{float(si.unit_price):,.0f}</td><td class='r'>{float(si.line_total):,.0f}</td></tr>"
 
     voided_banner = ""
     if sale.is_voided:
@@ -580,24 +581,25 @@ def get_receipt(
 <meta charset="utf-8">
 <title>Receipt #{sale.id}</title>
 <style>
-*{{margin:0;padding:0;box-sizing:border-box;font-family:'Courier New',monospace}}
-body{{max-width:340px;margin:0 auto;padding:16px;color:#111}}
-.logo{{max-height:64px;max-width:180px;object-fit:contain;display:block;margin:0 auto 8px}}
-.header{{text-align:center;margin-bottom:10px}}
-.business-name{{font-size:18px;font-weight:700;letter-spacing:.3px}}
-.business-phone{{font-size:11px;color:#555;margin-top:2px}}
-.divider{{border-top:1px dashed #999;margin:8px 0}}
-.voided{{color:#dc2626;font-weight:700;text-align:center;font-size:16px;border:2px solid #dc2626;padding:4px;margin:8px 0;border-radius:4px}}
-.info{{font-size:11px;line-height:1.5;margin-bottom:8px}}
-table{{width:100%;border-collapse:collapse;margin:6px 0}}
-th{{border-bottom:2px solid #111;padding:4px 2px;font-size:11px;text-align:left}}
-td{{padding:3px 2px;font-size:11px;border-bottom:1px dotted #ccc}}
+*{{margin:0;padding:0;box-sizing:border-box;font-family:'Arial','Helvetica',sans-serif}}
+body{{max-width:360px;margin:0 auto;padding:20px;color:#000;background:#fff;font-size:13px;font-weight:700;line-height:1.4}}
+.logo{{max-height:64px;max-width:180px;object-fit:contain;display:block;margin:0 auto 12px}}
+.header{{text-align:center;margin-bottom:14px}}
+.business-name{{font-size:20px;font-weight:900;letter-spacing:.5px}}
+.business-phone{{font-size:13px;font-weight:800;color:#333;margin-top:4px}}
+.divider{{border-top:2px dashed #000;margin:10px 0}}
+.voided{{color:#dc2626;font-weight:900;text-align:center;font-size:18px;border:3px solid #dc2626;padding:6px;margin:10px 0;border-radius:4px}}
+.info{{font-size:13px;font-weight:700;line-height:1.6;margin-bottom:10px}}
+table{{width:100%;border-collapse:collapse;margin:10px 0}}
+th{{border-bottom:3px solid #000;padding:6px 3px;font-size:12px;font-weight:900;text-align:left;text-transform:uppercase;letter-spacing:.4px}}
+td{{padding:7px 3px;font-size:13px;font-weight:700;border-bottom:1px dashed #999;vertical-align:top}}
+.product{{font-weight:900}}
 .r{{text-align:right}}
-.total{{border-top:2px solid #111;margin-top:8px;padding-top:8px;text-align:right;font-size:15px;font-weight:700}}
-.footer{{text-align:center;margin-top:14px;font-size:10px;color:#666;line-height:1.6}}
-.print-btn{{display:block;width:100%;margin:0 0 14px;padding:10px;font-size:14px;cursor:pointer;background:#0a7e6b;color:#fff;border:none;border-radius:6px;font-weight:600}}
+.total{{border-top:3px solid #000;margin-top:12px;padding-top:12px;text-align:right;font-size:20px;font-weight:900}}
+.footer{{text-align:center;margin-top:18px;font-size:12px;font-weight:700;color:#333;line-height:1.6}}
+.print-btn{{display:block;width:100%;margin:0 0 16px;padding:12px;font-size:15px;cursor:pointer;background:#0a7e6b;color:#fff;border:none;border-radius:6px;font-weight:900}}
 .print-btn:hover{{background:#096657}}
-@media print{{.print-btn{{display:none}}body{{max-width:100%;padding:0}}}}
+@media print{{.print-btn{{display:none}}body{{max-width:100%;padding:0;font-size:12px}}th,td{{font-weight:700}}}}
 </style>
 </head>
 <body>
@@ -609,7 +611,7 @@ td{{padding:3px 2px;font-size:11px;border-bottom:1px dotted #ccc}}
 </div>
 {voided_banner}
 <div class="divider"></div>
-<div class="info"><strong>Receipt #{sale.id}</strong><br>{info_lines}</div>
+<div class="info">{info_lines}</div>
 <table>
 <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Total</th></tr></thead>
 <tbody>{items_html}</tbody>

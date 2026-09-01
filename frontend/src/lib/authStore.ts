@@ -8,6 +8,7 @@ type Me = {
   role: "boss" | "user";
   branch_id: number | null;
   business_name?: string | null;
+  business_phone?: string | null;
   business_logo_url?: string | null;
 };
 

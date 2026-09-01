@@ -10,6 +10,7 @@ class UserOut(BaseModel):
     branch_id: int | None = None
     is_active: bool
     business_name: str | None = None
+    business_phone: str | None = None
     business_logo_url: str | None = None
 
     class Config:
@@ -26,3 +27,9 @@ class UserCreate(BaseModel):
 class UserSelfUpdate(BaseModel):
     email: EmailStr | None = None
     password: str | None = None
+
+
+class BusinessUpdate(BaseModel):
+    business_name: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
