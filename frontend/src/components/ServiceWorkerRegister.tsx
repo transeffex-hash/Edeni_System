@@ -16,15 +16,10 @@ export default function ServiceWorkerRegister() {
 
     const register = async () => {
       try {
-        // Unregister any stale service workers first so old caches are cleared
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-        }
-
-        // Register the new service worker
+        // Register the app service worker only.
+        // The Firebase messaging SW is registered on demand (with its own scope)
+        // by firebaseWebPush.ts when notifications are enabled.
         const registration = await navigator.serviceWorker.register("/sw.js");
-        await navigator.serviceWorker.register("/firebase-messaging-sw.js");
 
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;

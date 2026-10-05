@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { IntlProvider, type AbstractIntlMessages } from "use-intl";
 
 type IntlProviderClientProps = {
@@ -15,6 +16,10 @@ export default function IntlProviderClient({
   timeZone,
   children,
 }: IntlProviderClientProps) {
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   return (
     <IntlProvider locale={locale} messages={messages} timeZone={timeZone}>
       {children}

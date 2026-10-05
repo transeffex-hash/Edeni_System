@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -61,9 +63,12 @@ def login(
     if not business or not business.is_active or business.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
 
+    user.last_login_at = datetime.utcnow()
+    db.commit()
+
     token = create_access_token(subject=str(user.id))
     refresh = create_refresh_token(subject=str(user.id))
-    
+
     _set_auth_cookies(response, token, refresh)
     return Token(access_token=token)
 
@@ -109,6 +114,7 @@ def register(
         email_hash=email_hash,
         password_hash=hash_password(payload.password),
         role=UserRole.boss,
+        last_login_at=datetime.utcnow(),
     )
     db.add(boss)
     db.commit()

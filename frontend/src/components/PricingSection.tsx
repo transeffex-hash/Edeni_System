@@ -31,10 +31,11 @@ export default function PricingSection() {
             <ul className="mt-6 space-y-2 text-gray-700">
               <li className="flex items-center gap-2"><span>•</span> Up to 5 users</li>
             </ul>
-            <Link href={`/${locale}/register`} className="mt-8 block">
-              <button className="w-full rounded-full bg-[#0a7e6b] hover:bg-[#096657] text-white font-semibold py-4 px-8 text-lg transition-colors shadow-lg">
-                Get started
-              </button>
+            <Link
+              href={`/${locale}/register`}
+              className="mt-8 block w-full text-center rounded-full bg-[#0a7e6b] hover:bg-[#096657] text-white font-semibold py-4 px-8 text-lg transition-colors shadow-lg"
+            >
+              Get started
             </Link>
           </div>
 
@@ -48,10 +49,11 @@ export default function PricingSection() {
             <ul className="mt-6 space-y-2 text-gray-700">
               <li className="flex items-center gap-2"><span>•</span> Up to 10 users</li>
             </ul>
-            <Link href={`/${locale}/register`} className="mt-8 block">
-              <button className="w-full rounded-full bg-[#0a7e6b] hover:bg-[#096657] text-white font-semibold py-4 px-8 text-lg transition-colors shadow-lg">
-                Get started
-              </button>
+            <Link
+              href={`/${locale}/register`}
+              className="mt-8 block w-full text-center rounded-full bg-[#0a7e6b] hover:bg-[#096657] text-white font-semibold py-4 px-8 text-lg transition-colors shadow-lg"
+            >
+              Get started
             </Link>
           </div>
 
@@ -65,10 +67,11 @@ export default function PricingSection() {
             <ul className="mt-6 space-y-2 text-white/90">
               <li className="flex items-center gap-2"><span>•</span> All users & branches</li>
             </ul>
-            <Link href={`/${locale}/register`} className="mt-8 block">
-              <button className="w-full rounded-full bg-white hover:bg-white/90 text-[#0a7e6b] font-semibold py-4 px-8 text-lg transition-colors shadow-lg">
-                Get started
-              </button>
+            <Link
+              href={`/${locale}/register`}
+              className="mt-8 block w-full text-center rounded-full bg-white hover:bg-white/90 text-[#0a7e6b] font-semibold py-4 px-8 text-lg transition-colors shadow-lg"
+            >
+              Get started
             </Link>
           </div>
         </div>

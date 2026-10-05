@@ -72,6 +72,7 @@ export default function Footer() {
                 {t("email")}
               </a>
             </p>
+            <p className="text-gray-300 mt-2">{t("address")}</p>
           </div>
 
           {/* Quick links */}

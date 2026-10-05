@@ -12,6 +12,8 @@ class UserOut(BaseModel):
     business_name: str | None = None
     business_phone: str | None = None
     business_logo_url: str | None = None
+    business_tin: str | None = None
+    business_momo_code: str | None = None
 
     class Config:
         from_attributes = True
@@ -33,3 +35,5 @@ class BusinessUpdate(BaseModel):
     business_name: str | None = None
     phone: str | None = None
     email: EmailStr | None = None
+    tin: str | None = None
+    momo_code: str | None = None

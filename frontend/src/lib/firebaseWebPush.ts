@@ -30,7 +30,10 @@ let _messaging: ReturnType<typeof getMessaging> | null = null;
 
 async function getMessagingServiceWorker() {
   if (!("serviceWorker" in navigator)) throw new Error("service_worker_unsupported");
-  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  // Dedicated scope so it doesn't replace the main app SW registered at "/".
+  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+    scope: "/firebase-cloud-messaging-push-scope",
+  });
   await navigator.serviceWorker.ready;
   return registration;
 }

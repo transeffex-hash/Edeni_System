@@ -40,6 +40,8 @@ def me(
         business_name=b.name if b else None,
         business_logo_url=b.logo_url if b else None,
         business_phone=pii_decrypt(b.phone_enc) if b and b.phone_enc else None,
+        business_tin=b.tin if b else None,
+        business_momo_code=b.momo_code if b else None,
     )
 
 
@@ -156,6 +158,86 @@ def list_users(
     ]
 
 
+# NOTE: static routes must be declared before "/{user_id}" or FastAPI will try
+# to parse "business" as an int and return 422.
+@router.patch("/business", response_model=UserOut)
+def update_business_settings(
+    payload: BusinessUpdate,
+    db: Session = Depends(get_db),
+    boss: User = Depends(require_boss),
+):
+    b = db.query(Business).filter(Business.id == boss.business_id).first()
+    if not b:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    if payload.business_name is not None:
+        name = payload.business_name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Business name is required")
+        b.name = name
+
+    if payload.phone is not None:
+        phone = payload.phone.strip()
+        if not phone:
+            raise HTTPException(status_code=400, detail="Phone number is required")
+        b.phone_enc = pii_encrypt(phone)
+        b.phone_hash = pii_hash(phone)
+
+    if payload.email is not None:
+        email = payload.email
+        email_hash = pii_hash(email)
+        existing = (
+            db.query(User)
+            .filter(User.email_hash == email_hash)
+            .filter(User.is_active == True)
+            .filter(User.id != boss.id)
+            .first()
+        )
+        if existing:
+            raise HTTPException(status_code=409, detail="Email already in use")
+
+        boss.email_enc = pii_encrypt(email)
+        boss.email_hash = email_hash
+
+    if payload.tin is not None:
+        b.tin = payload.tin.strip() or None
+
+    if payload.momo_code is not None:
+        b.momo_code = payload.momo_code.strip() or None
+
+    db.commit()
+    db.refresh(b)
+    db.refresh(boss)
+
+    log_audit(
+        db=db,
+        business_id=boss.business_id,
+        user_id=boss.id,
+        action="update_business",
+        resource="Business",
+        resource_id=b.id,
+        details={
+            "name_changed": payload.business_name is not None,
+            "phone_changed": payload.phone is not None,
+            "email_changed": payload.email is not None,
+        },
+    )
+    db.commit()
+
+    return UserOut(
+        id=boss.id,
+        email=pii_decrypt(boss.email_enc) or "",
+        role=boss.role,
+        branch_id=boss.branch_id,
+        is_active=boss.is_active,
+        business_name=b.name,
+        business_logo_url=b.logo_url,
+        business_phone=pii_decrypt(b.phone_enc) if b.phone_enc else None,
+        business_tin=b.tin,
+        business_momo_code=b.momo_code,
+    )
+
+
 @router.patch("/{user_id}", response_model=UserOut)
 def update_user(
     user_id: int,
@@ -233,75 +315,6 @@ def delete_user(
     )
     db.commit()
     return {"ok": True, "user_id": target.id, "deactivated": True}
-
-
-@router.patch("/business", response_model=UserOut)
-def update_business_settings(
-    payload: BusinessUpdate,
-    db: Session = Depends(get_db),
-    boss: User = Depends(require_boss),
-):
-    b = db.query(Business).filter(Business.id == boss.business_id).first()
-    if not b:
-        raise HTTPException(status_code=404, detail="Business not found")
-
-    if payload.business_name is not None:
-        name = payload.business_name.strip()
-        if not name:
-            raise HTTPException(status_code=400, detail="Business name is required")
-        b.name = name
-
-    if payload.phone is not None:
-        phone = payload.phone.strip()
-        if not phone:
-            raise HTTPException(status_code=400, detail="Phone number is required")
-        b.phone_enc = pii_encrypt(phone)
-        b.phone_hash = pii_hash(phone)
-
-    if payload.email is not None:
-        email = payload.email
-        email_hash = pii_hash(email)
-        existing = (
-            db.query(User)
-            .filter(User.email_hash == email_hash)
-            .filter(User.is_active == True)
-            .filter(User.id != boss.id)
-            .first()
-        )
-        if existing:
-            raise HTTPException(status_code=409, detail="Email already in use")
-
-        boss.email_enc = pii_encrypt(email)
-        boss.email_hash = email_hash
-
-    db.commit()
-    db.refresh(b)
-    db.refresh(boss)
-
-    log_audit(
-        db=db,
-        business_id=boss.business_id,
-        user_id=boss.id,
-        action="update_business",
-        resource="Business",
-        resource_id=b.id,
-        details={
-            "name_changed": payload.business_name is not None,
-            "phone_changed": payload.phone is not None,
-            "email_changed": payload.email is not None,
-        },
-    )
-    db.commit()
-
-    return UserOut(
-        id=boss.id,
-        email=pii_decrypt(boss.email_enc) or "",
-        role=boss.role,
-        branch_id=boss.branch_id,
-        is_active=boss.is_active,
-        business_name=b.name,
-        business_logo_url=b.logo_url,
-    )
 
 
 @router.post("/logo")

@@ -18,6 +18,10 @@ type Business = {
   paid_amount_total: number;
   subscription_end_date?: string | null;
   created_at: string;
+  user_count: number;
+  product_count: number;
+  branch_count: number;
+  last_login_at?: string | null;
 };
 
 function daysBetween(a: Date, b: Date): number {
@@ -40,7 +44,9 @@ export default function AdminBusinessesPage() {
       setRows(data);
     } catch (e: any) {
       setError(e?.message ?? t("admin.failed"));
-      router.push("/admin/login");
+      if (e?.status === 401) {
+        router.push("/admin/login");
+      }
     }
   }
 
@@ -128,6 +134,15 @@ export default function AdminBusinessesPage() {
     }
   }
 
+  function formatDateTime(d: string | null | undefined): string {
+    if (!d) return "—";
+    try {
+      return new Date(d).toLocaleString(undefined, { timeZone: "Africa/Kigali" });
+    } catch {
+      return d;
+    }
+  }
+
   return (
     <>
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -203,6 +218,20 @@ export default function AdminBusinessesPage() {
                       ) : null}
                       <div className="text-xs text-gray-400 mt-0.5">
                         {t("admin.createdOn")}: {formatDate(b.created_at)}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {t("admin.lastLogin")}: {b.last_login_at ? formatDateTime(b.last_login_at) : t("admin.neverLoggedIn")}
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-500">
+                        <span>
+                          <span className="font-semibold text-gray-800">{b.user_count}</span> {t("admin.users")}
+                        </span>
+                        <span>
+                          <span className="font-semibold text-gray-800">{b.product_count}</span> {t("admin.products")}
+                        </span>
+                        <span>
+                          <span className="font-semibold text-gray-800">{b.branch_count}</span> {t("admin.branches")}
+                        </span>
                       </div>
                     </div>
                   </div>

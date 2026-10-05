@@ -149,13 +149,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Link href={`/${locale}/register`}>
-              <button
-                type="button"
-                className="w-full px-4 py-3 rounded-full border-2 border-[#0a7e6b] text-[#0a7e6b] hover:bg-[#0a7e6b]/10 font-semibold transition-colors"
-              >
-                {t("auth.registerCta")}
-              </button>
+            <Link
+              href={`/${locale}/register`}
+              className="block w-full px-4 py-3 rounded-full border-2 border-[#0a7e6b] text-[#0a7e6b] hover:bg-[#0a7e6b]/10 font-semibold transition-colors text-center"
+            >
+              {t("auth.registerCta")}
             </Link>
           </form>
         </div>

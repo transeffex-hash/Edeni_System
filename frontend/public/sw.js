@@ -18,7 +18,7 @@
   - We keep cache names versioned to allow clean upgrades.
 */
 
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC_CACHE = `edenisystem-static-${VERSION}`;
 const PAGES_CACHE = `edenisystem-pages-${VERSION}`;
 

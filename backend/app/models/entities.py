@@ -20,6 +20,8 @@ class Business(Base):
     logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     phone_enc: Mapped[str | None] = mapped_column(String(500), nullable=True)
     phone_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    tin: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    momo_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     paid_amount_total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
@@ -55,6 +57,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 

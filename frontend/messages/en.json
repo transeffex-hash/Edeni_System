@@ -43,7 +43,12 @@
     "extendPrompt": "Months to add:",
     "logout": "Logout",
     "logo": "Logo",
-    "createdOn": "Created on"
+    "createdOn": "Created on",
+    "users": "users",
+    "products": "products",
+    "branches": "branches",
+    "lastLogin": "Last login",
+    "neverLoggedIn": "Never"
   },
   "labels": {
     "unit": "Unit",
@@ -440,6 +445,7 @@
       "copyright": "© 2026 Transeffex Ltd. All rights reserved.",
       "contact": "Contact",
       "email": "transeffex@gmail.com",
+      "address": "Kibagabaga, KG 313 St, House 10, Kigali, Rwanda",
       "social": {
         "linkedin": "LinkedIn",
         "instagram": "Instagram",
@@ -457,6 +463,10 @@
     "saved": "Profile saved",
     "failedToSave": "Failed to save",
     "businessTitle": "Business details",
+    "tin": "TIN",
+    "tinPlaceholder": "Tax Identification Number (optional)",
+    "momoCode": "MoMo Code",
+    "momoCodePlaceholder": "MTN MoMo pay code (optional)",
     "logo": "Business logo",
     "logoUploaded": "Logo uploaded",
     "failedToUploadLogo": "Failed to upload logo"

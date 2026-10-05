@@ -608,6 +608,8 @@ td{{padding:7px 3px;font-size:13px;font-weight:700;border-bottom:1px dashed #999
 {logo_html}
 <div class="business-name">{business.name}</div>
 {f'<div class="business-phone">Tel: {business_phone}</div>' if business_phone else ''}
+{f'<div class="business-phone">TIN: {business.tin}</div>' if business.tin else ''}
+{f'<div class="business-phone">MoMo Code: {business.momo_code}</div>' if business.momo_code else ''}
 </div>
 {voided_banner}
 <div class="divider"></div>

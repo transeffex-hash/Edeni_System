@@ -10,6 +10,8 @@ type Me = {
   business_name?: string | null;
   business_phone?: string | null;
   business_logo_url?: string | null;
+  business_tin?: string | null;
+  business_momo_code?: string | null;
 };
 
 type AuthState = {

@@ -43,7 +43,12 @@
     "extendPrompt": "Amezi yo kongera:",
     "logout": "Sohoka",
     "logo": "Ikarita",
-    "createdOn": "Byaremwe ku"
+    "createdOn": "Byaremwe ku",
+    "users": "abakoresha",
+    "products": "ibicuruzwa",
+    "branches": "amashami",
+    "lastLogin": "Iheruka kwinjira",
+    "neverLoggedIn": "Ntarinjira"
   },
   "labels": {
     "unit": "Igipimo",
@@ -447,6 +452,7 @@
       "copyright": "© 2026 Transeffex Ltd. Uburenganzira bwose burabitswe.",
       "contact": "Ibisobanuro",
       "email": "transeffex@gmail.com",
+      "address": "Kibagabaga, KG 313 St, Inzu ya 10, Kigali, Rwanda",
       "social": {
         "linkedin": "LinkedIn",
         "instagram": "Instagram",
@@ -459,6 +465,10 @@
     "title": "Igenamiterere(setingi)",
     "hint": "Hindura imeri cyangwa ijambo ry'ibanga.",
     "businessTitle": "Business details",
+    "tin": "TIN",
+    "tinPlaceholder": "Nomero y'umusoro (TIN) - si ngombwa",
+    "momoCode": "Kode ya MoMo",
+    "momoCodePlaceholder": "Kode yo kwishyurira ya MTN MoMo - si ngombwa",
     "logo": "Business logo",
     "logoUploaded": "Logo uploaded",
     "failedToUploadLogo": "Failed to upload logo",

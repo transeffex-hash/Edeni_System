@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from jose import JWTError, jwt
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.app.core.limiter import limiter
@@ -10,7 +11,7 @@ from backend.app.core.security import create_access_token, verify_password
 from backend.app.core.pii_crypto import pii_decrypt
 from datetime import date, datetime, timedelta
 
-from backend.app.models.entities import Business, DeviceToken
+from backend.app.models.entities import Branch, Business, DeviceToken, Product, User
 from backend.app.schemas.admin import BusinessOut
 from backend.app.schemas.notifications import RegisterDeviceToken
 
@@ -85,6 +86,36 @@ def list_businesses(
         .limit(200)
         .all()
     )
+    business_ids = [b.id for b in rows]
+
+    user_counts = dict(
+        db.query(User.business_id, func.count(User.id))
+        .filter(User.business_id.in_(business_ids))
+        .group_by(User.business_id)
+        .all()
+    ) if business_ids else {}
+
+    product_counts = dict(
+        db.query(Product.business_id, func.count(Product.id))
+        .filter(Product.business_id.in_(business_ids))
+        .group_by(Product.business_id)
+        .all()
+    ) if business_ids else {}
+
+    branch_counts = dict(
+        db.query(Branch.business_id, func.count(Branch.id))
+        .filter(Branch.business_id.in_(business_ids))
+        .group_by(Branch.business_id)
+        .all()
+    ) if business_ids else {}
+
+    last_logins = dict(
+        db.query(User.business_id, func.max(User.last_login_at))
+        .filter(User.business_id.in_(business_ids), User.last_login_at.isnot(None))
+        .group_by(User.business_id)
+        .all()
+    ) if business_ids else {}
+
     return [
         BusinessOut(
             id=b.id,
@@ -95,6 +126,10 @@ def list_businesses(
             paid_amount_total=float(b.paid_amount_total),
             subscription_end_date=b.subscription_end_date,
             created_at=b.created_at,
+            user_count=user_counts.get(b.id, 0),
+            product_count=product_counts.get(b.id, 0),
+            branch_count=branch_counts.get(b.id, 0),
+            last_login_at=last_logins.get(b.id),
         )
         for b in rows
     ]

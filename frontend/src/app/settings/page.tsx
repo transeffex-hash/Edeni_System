@@ -19,12 +19,16 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
+  const [tin, setTin] = useState("");
+  const [momoCode, setMomoCode] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (me?.email) setEmail(me.email);
     if (me?.business_name) setBusinessName(me.business_name);
     setPhone(me?.business_phone || "");
+    setTin(me?.business_tin || "");
+    setMomoCode(me?.business_momo_code || "");
     setLogoUrl(
       me?.business_logo_url
         ? me.business_logo_url.startsWith("http")
@@ -80,6 +84,8 @@ export default function SettingsPage() {
     const payload: any = {};
     if (businessName.trim()) payload.business_name = businessName.trim();
     if (phone.trim()) payload.phone = phone.trim();
+    payload.tin = tin.trim();
+    payload.momo_code = momoCode.trim();
 
     setLoading(true);
     try {
@@ -205,6 +211,26 @@ export default function SettingsPage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder={t("auth.phonePlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="app-label">{t("settings.tin")}</label>
+          <input
+            className="app-input"
+            value={tin}
+            onChange={(e) => setTin(e.target.value)}
+            placeholder={t("settings.tinPlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="app-label">{t("settings.momoCode")}</label>
+          <input
+            className="app-input"
+            value={momoCode}
+            onChange={(e) => setMomoCode(e.target.value)}
+            placeholder={t("settings.momoCodePlaceholder")}
           />
         </div>
 
