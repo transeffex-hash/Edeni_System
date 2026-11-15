@@ -8,6 +8,7 @@ import { API_BASE, apiGet } from "@/lib/api";
 import { registerAdminForPushNotifications } from "@/lib/firebaseWebPush";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePrompt } from "@/hooks/usePrompt";
+import SubscriptionModal from "@/components/SubscriptionModal";
 
 type Business = {
   id: number;
@@ -16,6 +17,7 @@ type Business = {
   logo_url?: string | null;
   is_active: boolean;
   paid_amount_total: number;
+  subscription_start_date?: string | null;
   subscription_end_date?: string | null;
   created_at: string;
   user_count: number;
@@ -36,6 +38,7 @@ export default function AdminBusinessesPage() {
   const [rows, setRows] = useState<Business[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pushStatus, setPushStatus] = useState<string | null>(null);
+  const [subTarget, setSubTarget] = useState<Business | null>(null);
 
   async function load() {
     setError(null);
@@ -74,21 +77,6 @@ export default function AdminBusinessesPage() {
     prompt(t("admin.addPayment"), t("admin.addPaymentPrompt"), "", (amount) => {
       if (!amount.trim()) return;
       doAddPayment(id, amount);
-    });
-  }
-
-  async function doExtendSubscription(id: number, months: string) {
-    const res = await fetch(
-      API_BASE + `/api/admin/businesses/${id}/set-subscription?months=${encodeURIComponent(months)}`,
-      { method: "POST", credentials: "include" }
-    );
-    if (res.ok) load();
-  }
-
-  function askExtendSubscription(id: number) {
-    prompt(t("admin.extendSubscription"), t("admin.extendPrompt"), "1", (months) => {
-      if (!months.trim()) return;
-      doExtendSubscription(id, months);
     });
   }
 
@@ -242,8 +230,11 @@ export default function AdminBusinessesPage() {
                     </span>
                     {b.subscription_end_date ? (
                       <div className="text-right">
-                        <div className="text-xs text-gray-500">{t("admin.subscriptionEnd")}</div>
-                        <div className="text-sm font-medium text-gray-800">{formatDate(b.subscription_end_date)}</div>
+                        <div className="text-xs text-gray-500">{t("admin.subscription")}</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          {b.subscription_start_date ? `${formatDate(b.subscription_start_date)} → ` : ""}
+                          {formatDate(b.subscription_end_date)}
+                        </div>
                         {daysLeft !== null && (
                           <div className={`text-xs font-medium mt-0.5 ${
                             daysLeft < 0 ? "text-red-600" : daysLeft <= 7 ? "text-orange-600" : "text-green-600"
@@ -268,7 +259,7 @@ export default function AdminBusinessesPage() {
                   >
                     {b.is_active ? t("admin.deactivate") : t("admin.activate")}
                   </button>
-                  <button className="app-btn-ghost" onClick={() => askExtendSubscription(b.id)} type="button">
+                  <button className="app-btn-ghost" onClick={() => setSubTarget(b)} type="button">
                     {t("admin.extendSubscription")}
                   </button>
                   <button className="app-btn-ghost" onClick={() => askAddPayment(b.id)} type="button">
@@ -291,6 +282,15 @@ export default function AdminBusinessesPage() {
         </div>
       </div>
     </main>
+    {subTarget && (
+      <SubscriptionModal
+        businessId={subTarget.id}
+        businessName={subTarget.name}
+        currentEndDate={subTarget.subscription_end_date}
+        onClose={() => setSubTarget(null)}
+        onSaved={load}
+      />
+    )}
     <Dialog />
     <PromptDialog />
     </>

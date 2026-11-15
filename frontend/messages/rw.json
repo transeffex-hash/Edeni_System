@@ -8,7 +8,8 @@
     "failedToCreateProduct": "Byanze kurema igicuruzwa",
     "required": "Ari ngombwa",
     "failedToAddStock": "Byanze kongeramo ububiko",
-    "registerFailed": "Gufungura konti byanze"
+    "registerFailed": "Gufungura konti byanze",
+    "failedToSave": "Ntibyashoboye kubika"
   },
   "admin": {
     "title": "Konseye ya Sisitemu",
@@ -48,7 +49,23 @@
     "products": "ibicuruzwa",
     "branches": "amashami",
     "lastLogin": "Iheruka kwinjira",
-    "neverLoggedIn": "Ntarinjira"
+    "neverLoggedIn": "Ntarinjira",
+    "subscriptionTitle": "Kwishyura — {name}",
+    "subStart": "Itariki yo gutangira",
+    "subEnd": "Itariki yo kurangira",
+    "subDuration": "Igihe: iminsi {days}",
+    "subQuick": "Vuba",
+    "subAmount": "Amafaranga yishyuye (RWF)",
+    "subNote": "Icyitonderwa",
+    "subNotePlaceholder": "urugero: yishyuye na MoMo, fagitire #...",
+    "subSave": "Bika kongera",
+    "subSaving": "Birabikwa...",
+    "subCancel": "Kureka",
+    "subEndAfterStart": "Itariki yo kurangira igomba kuba nyuma y'iyo gutangira",
+    "subHistory": "Amateka y'ubwishyu",
+    "subNoHistory": "Nta bwishyu bwanditswe",
+    "subMonth": "ukwezi",
+    "subMonths": "amezi"
   },
   "labels": {
     "unit": "Igipimo",
@@ -132,7 +149,8 @@
     "haveAccount": "Ufite konti?",
     "noAccount": "Nta konti ufite?",
     "registerCta": "Iyandikishe",
-    "logout": "Sohoka"
+    "logout": "Sohoka",
+    "phoneOptional": "Telefone (ntago ari ngombwa)"
   },
   "dashboard": {
     "title": "Imbonerahamwe",
@@ -274,7 +292,7 @@
     "noEntriesPeriod": "Nta makuru muri iki gihe",
     "failedToLoad": "Byanze gukurura amakuru mushaka",
     "failedToSave": "Byanze",
-    "oldestFirst": "Ibya kera bibanze",
+    "oldestFirst": "Ibyabanje ni byo bigaragara mbere",
     "newestFirst": "Ibishya bibanze"
   },
   "reports": {
@@ -326,9 +344,9 @@
       "paymentsReceived": "Kwishyura Byakiriwe",
       "netCash": "Amafaranga Yinjiye Nyayo",
       "customer": "Umukiriya",
-      "saleId": "Nomero y'igurishwa",
-      "dueDate": "Itariki ntarengwa",
-      "daysOverdue": "Iminsi yarenze",
+      "saleId": "Igurishwa",
+      "dueDate": "Itariki y'itizwa",
+      "daysOverdue": "Iminsi y'ikweze",
       "paymentMethod": "Uburyo bwo Kwishyura",
       "voidedBy": "Byasubiwemo na",
       "voidedAt": "Itariki yo Gusubiramo",
@@ -482,5 +500,81 @@
     "title": "Wizeye neza?",
     "confirm": "Emeza",
     "cancel": "Reka"
+  },
+  "common": {
+    "loadMore": "Kuresha andi"
+  },
+  "subscription": {
+    "expiredTitle": "Kwishyura kwarangiye",
+    "graceBody": "Kwishyura kwawe kwarangiye. Ufite iminsi {days} yo kuvugurura mbere yo gufunzwa.",
+    "expiringSoon": "Kwishyura kwawe kurarangira mu minsi {days}."
+  },
+  "whatsapp": {
+    "title": "Ohereza risiti kuri WhatsApp",
+    "hint": "Ohereza risiti #{id} umukiriya",
+    "phone": "Nimero ya telefone y'umukiriya",
+    "invalidPhone": "Andika nimero ya telefone y'ukuri",
+    "send": "Fungura WhatsApp",
+    "opening": "Birafungurwa...",
+    "note": "WhatsApp irafunguka n'ubutumwa bwateguwe — usigaje gusa kohereza.",
+    "failed": "Ntibyashoboye gutegura risiti",
+    "msgGreeting": "Muraho{name},",
+    "msgReceipt": "Risiti yawe #{id}:",
+    "msgTotal": "Yose hamwe",
+    "msgLink": "Reba risiti yuzuye:",
+    "msgThanks": "Murakoze kuducuruzira!"
+  },
+  "barcode": {
+    "scanTitle": "Sikana barcode",
+    "scanHint": "Koresha kamera kuri barcode, cyangwa ukoreshe igikoresho gisikana",
+    "manualPlaceholder": "Cyangwa wandike kode",
+    "use": "Koresha",
+    "cameraUnsupported": "Kamera ntishobora gusikana kuri iyi gikoresho — wandike kode",
+    "cameraDenied": "Kamera ntiyemerewe. Emera kamera hanyuma ugerageze",
+    "notFound": "Nta gicuruzwa kibonetse gifite barcode {code}",
+    "enterPrice": "andika igiciro, hanyuma ukande Add item",
+    "stillScanning": "Biracyari gusikana — gerageza kwegereza cyangwa kwongera urumuri",
+    "startingCamera": "Kamera iratangira…",
+    "pointAtBarcode": "Koresha kamera kuri barcode",
+    "tryingStronger": "Kugerageza ubundi buryo…",
+    "engineFailed": "Ntibyashoboye gutangiza isikana — reba interineti hanyuma ugerageze"
+  },
+  "drafts": {
+    "title": "Ibicuruzwa bitararangira",
+    "unnamed": "Draft #{id}",
+    "discard": "Siba",
+    "autosaved": "Byabitswe vyan'ibisubizo"
+  },
+  "editSale": {
+    "title": "Igurishwa #{id}",
+    "edit": "Hindura",
+    "savePrice": "Bika",
+    "addItem": "Ongeraho igicuruzwa",
+    "payments": "Ubwishyu",
+    "creditNote": "Igurishwa kuri konti — rikurikiranwa muri ledger",
+    "balanceDue": "Asigaye kwishyura",
+    "paidInFull": "Yishyuye byose",
+    "noPayments": "Nta bwishyu bwanditswe",
+    "amount": "Amafaranga",
+    "recordPayment": "Andika ubwishyu"
+  },
+  "units": {
+    "title": "Ibipimo & barcode — {name}",
+    "manage": "Ibipimo",
+    "productBarcode": "Barcode y'igicuruzwa",
+    "productBarcodeHint": "Ikorwa iyo igicuruzwa kigurishwa ku kipimo kimwe",
+    "barcodeOptional": "Barcode (ntago ari ngombwa)",
+    "barcodePlaceholder": "Sikana cyangwa wandike barcode",
+    "existing": "Ibipimo",
+    "none": "Nta bipimo — ongeraho urugero: piece, carton, box",
+    "base": "ibanze",
+    "price": "Igiciro cyo kugurisha",
+    "save": "Bika",
+    "add": "Ongeraho igipimo (urugero: carton = 24 pieces)",
+    "name": "Izina ry'igipimo",
+    "namePlaceholder": "urugero: carton",
+    "factor": "Factor",
+    "factorPlaceholder": "= N {unit}",
+    "factorHint": "Ubunini bwa base units bikora kimwe. Carton ya 24 ifite factor 24."
   }
 }

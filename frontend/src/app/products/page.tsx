@@ -6,12 +6,15 @@ import { useTranslations } from "use-intl";
 import { API_BASE, apiGet, apiPost } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 import { useConfirm } from "@/hooks/useConfirm";
+import UnitsModal from "@/components/UnitsModal";
+import BarcodeScannerModal from "@/components/BarcodeScanner";
 
 type ProductWithStock = {
   id: number;
   name: string;
   sku: string | null;
   unit: string;
+  barcode: string | null;
   total_stock: number;
   latest_cost_price: number | null;
   nearest_expiry: string | null;
@@ -30,7 +33,7 @@ type StockBatch = {
   created_at: string;
 };
 
-type CreateProduct = { name: string; sku?: string | null; unit?: string };
+type CreateProduct = { name: string; sku?: string | null; unit?: string; barcode?: string | null; selling_price?: number | null };
 
 type InventorySummary = {
   total_products: number;
@@ -63,7 +66,11 @@ export default function ProductsPage() {
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("unit");
   const [sku, setSku] = useState("");
+  const [barcode, setBarcode] = useState("");
+  const [sellingPrice, setSellingPrice] = useState("");
   const [creating, setCreating] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [unitsProduct, setUnitsProduct] = useState<ProductWithStock | null>(null);
 
   // Add stock modal
   const [stockProduct, setStockProduct] = useState<ProductWithStock | null>(null);
@@ -167,12 +174,20 @@ export default function ProductsPage() {
     }
 
     setCreating(true);
-    const payload: CreateProduct = { name, unit, sku: sku ? sku : null };
+    const payload: CreateProduct = {
+      name,
+      unit,
+      sku: sku ? sku : null,
+      barcode: barcode.trim() ? barcode.trim() : null,
+      selling_price: sellingPrice ? Number(sellingPrice) : null,
+    };
     try {
       await apiPost("/api/inventory/products", payload);
       setName("");
       setSku("");
       setUnit("unit");
+      setBarcode("");
+      setSellingPrice("");
       setShowAddForm(false);
       await loadProducts(true);
       await loadSummary();
@@ -396,6 +411,37 @@ export default function ProductsPage() {
               <input className="app-input" value={sku} onChange={(e) => setSku(e.target.value)} />
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="app-label">{t("units.barcodeOptional")}</label>
+              <div className="flex gap-2">
+                <input
+                  className="app-input flex-1 font-mono"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder={t("units.barcodePlaceholder")}
+                />
+                <button className="app-btn-outline" onClick={() => setScanOpen(true)} type="button" title={t("barcode.scanTitle")}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="app-label">{t("units.price")}</label>
+              <input
+                className="app-input"
+                type="number"
+                min={0}
+                step="0.01"
+                value={sellingPrice}
+                onChange={(e) => setSellingPrice(e.target.value)}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                placeholder="0"
+              />
+            </div>
+          </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <div className="flex gap-3">
             <button className="app-btn-primary" type="submit" disabled={creating}>
@@ -473,13 +519,22 @@ export default function ProductsPage() {
                     <td>{formatDate(p.nearest_expiry)}</td>
                     <td className="text-gray-500">{formatDate(p.last_stock_date)}</td>
                     <td>
-                      <button
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        onClick={() => openStockModal(p)}
-                        type="button"
-                      >
-                        {t("products.addStock")}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          onClick={() => openStockModal(p)}
+                          type="button"
+                        >
+                          {t("products.addStock")}
+                        </button>
+                        <button
+                          className="text-xs font-medium text-[#0a7e6b] hover:text-[#086b5b]"
+                          onClick={() => setUnitsProduct(p)}
+                          type="button"
+                        >
+                          {t("units.manage")}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -667,6 +722,19 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {unitsProduct && (
+        <UnitsModal product={unitsProduct} onClose={() => setUnitsProduct(null)} />
+      )}
+      {scanOpen && (
+        <BarcodeScannerModal
+          onDetected={(code) => {
+            setBarcode(code);
+            setScanOpen(false);
+          }}
+          onClose={() => setScanOpen(false)}
+        />
       )}
     </div>
     <Dialog />

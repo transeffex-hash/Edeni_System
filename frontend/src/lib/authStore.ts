@@ -12,6 +12,9 @@ type Me = {
   business_logo_url?: string | null;
   business_tin?: string | null;
   business_momo_code?: string | null;
+  subscription_status?: "active" | "grace" | "expired" | null;
+  subscription_days?: number | null;
+  subscription_end_date?: string | null;
 };
 
 type AuthState = {

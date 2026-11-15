@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel, EmailStr
 
 from backend.app.models.entities import UserRole
@@ -14,6 +16,9 @@ class UserOut(BaseModel):
     business_logo_url: str | None = None
     business_tin: str | None = None
     business_momo_code: str | None = None
+    subscription_status: str | None = None  # active | grace | expired
+    subscription_days: int | None = None
+    subscription_end_date: date | None = None
 
     class Config:
         from_attributes = True

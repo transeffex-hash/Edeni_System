@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
 from backend.app.core.db import get_db
+from backend.app.core.subscription import is_subscription_blocked
 from backend.app.models.entities import Business, User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
@@ -37,6 +38,8 @@ def get_current_user(
     business = db.query(Business).filter(Business.id == user.business_id).first()
     if not business or not business.is_active or business.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
+    if is_subscription_blocked(business):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Subscription expired. Please contact EdeniSystem to renew.")
     return user
 
 

@@ -9,6 +9,7 @@ from backend.app.core.audit import log_audit
 from backend.app.core.pii_crypto import pii_decrypt, pii_encrypt, pii_hash
 from backend.app.core.security import hash_password
 from backend.app.core.storage import upload_logo as upload_to_supabase
+from backend.app.core.subscription import subscription_status
 from backend.app.models.entities import Business, User, UserRole
 from backend.app.schemas.users import UserOut, UserCreate, UserSelfUpdate, BusinessUpdate
 
@@ -31,6 +32,7 @@ def me(
     b = db.query(Business).filter(Business.id == current_user.business_id).first()
     if b and (b.is_deleted or not b.is_active):
         raise HTTPException(status_code=403, detail="Business is inactive")
+    sub_status, sub_days = subscription_status(b) if b else (None, None)
     return UserOut(
         id=current_user.id,
         email=pii_decrypt(current_user.email_enc) or "",
@@ -42,6 +44,9 @@ def me(
         business_phone=pii_decrypt(b.phone_enc) if b and b.phone_enc else None,
         business_tin=b.tin if b else None,
         business_momo_code=b.momo_code if b else None,
+        subscription_status=sub_status,
+        subscription_days=sub_days,
+        subscription_end_date=b.subscription_end_date if b else None,
     )
 
 

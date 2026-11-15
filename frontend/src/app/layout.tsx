@@ -6,7 +6,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://edenisystem.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.edenisystem.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -27,17 +27,6 @@ export const metadata: Metadata = {
   ],
   creator: "Transeffex Ltd",
   publisher: "Transeffex Ltd",
-  icons: {
-    icon: "/logo.png",
-    apple: "/apple-icon.png",
-  },
-  alternates: {
-    canonical: "/",
-    languages: {
-      en: "/en",
-      rw: "/rw",
-    },
-  },
   openGraph: {
     type: "website",
     siteName: "EdeniSystem",

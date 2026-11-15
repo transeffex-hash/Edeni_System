@@ -29,7 +29,7 @@ def _end_of_day(end_date: datetime | None) -> datetime | None:
 
 def _sale_query(db, business_id, start_date, end_date, branch_id=None):
     end_date = _end_of_day(end_date)
-    q = db.query(Sale).filter(Sale.business_id == business_id, Sale.is_voided == False)  # noqa: E712
+    q = db.query(Sale).filter(Sale.business_id == business_id, Sale.is_voided == False, Sale.status == "paid")  # noqa: E712
     if branch_id is not None:
         q = q.filter(Sale.branch_id == branch_id)
     if start_date:
@@ -122,6 +122,7 @@ def products_report(
         .join(Sale, Sale.id == SaleItem.sale_id)
         .filter(SaleItem.business_id == user.business_id)
         .filter(Sale.is_voided == False)  # noqa: E712
+        .filter(Sale.status == "paid")
     )
     if user.branch_id is not None:
         q = q.filter(Sale.branch_id == user.branch_id)
@@ -331,6 +332,7 @@ def profit_report(
         .outerjoin(avg_costs, avg_costs.c.product_id == SaleItem.product_id)
         .filter(SaleItem.business_id == user.business_id)
         .filter(Sale.is_voided == False)  # noqa: E712
+        .filter(Sale.status == "paid")
     )
     if user.branch_id is not None:
         q = q.filter(Sale.branch_id == user.branch_id)
@@ -424,6 +426,7 @@ def overdue_debts(
         .filter(
             Sale.business_id == user.business_id,
             Sale.is_voided == False,  # noqa: E712
+            Sale.status == "paid",
             Sale.is_credit == True,  # noqa: E712
             Sale.due_date != None,  # noqa: E711
             Sale.due_date < func.current_date(),

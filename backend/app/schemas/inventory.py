@@ -7,6 +7,15 @@ class ProductCreate(BaseModel):
     name: str
     sku: str | None = None
     unit: str = "unit"
+    barcode: str | None = None
+    selling_price: float | None = None
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    sku: str | None = None
+    unit: str | None = None
+    barcode: str | None = None
 
 
 class ProductOut(BaseModel):
@@ -14,6 +23,7 @@ class ProductOut(BaseModel):
     name: str
     sku: str | None
     unit: str
+    barcode: str | None = None
 
     class Config:
         from_attributes = True
@@ -24,6 +34,12 @@ class ProductUnitCreate(BaseModel):
     factor_to_base: int
     is_base: bool = False
     selling_price: float | None = None
+    barcode: str | None = None
+
+
+class ProductUnitUpdate(BaseModel):
+    selling_price: float | None = None
+    barcode: str | None = None
 
 
 class ProductUnitOut(BaseModel):
@@ -33,6 +49,7 @@ class ProductUnitOut(BaseModel):
     factor_to_base: int
     is_base: bool
     selling_price: float | None
+    barcode: str | None = None
 
     class Config:
         from_attributes = True
@@ -75,6 +92,7 @@ class ProductWithStock(BaseModel):
     name: str
     sku: str | None
     unit: str
+    barcode: str | None = None
     total_stock: int
     latest_cost_price: float | None
     nearest_expiry: date | None
@@ -83,6 +101,11 @@ class ProductWithStock(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BarcodeLookup(BaseModel):
+    product: ProductWithStock
+    unit: ProductUnitOut | None = None
 
 
 class InventorySummary(BaseModel):

@@ -103,6 +103,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
+      {me?.subscription_status === "grace" && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-5xl mx-auto px-4 py-2.5 text-sm text-amber-900 flex items-center gap-2 flex-wrap">
+            <span className="font-semibold">{t("subscription.expiredTitle")}</span>
+            <span>{t("subscription.graceBody", { days: me.subscription_days ?? 0 })}</span>
+          </div>
+        </div>
+      )}
+      {me?.subscription_status === "active" && typeof me.subscription_days === "number" && me.subscription_days <= 5 && (
+        <div className="bg-blue-50 border-b border-blue-200">
+          <div className="max-w-5xl mx-auto px-4 py-2 text-sm text-blue-900">
+            {t("subscription.expiringSoon", { days: me.subscription_days })}
+          </div>
+        </div>
+      )}
+
       <main className="max-w-5xl mx-auto p-4 md:p-6">{children}</main>
       <OfflineSync />
     </div>

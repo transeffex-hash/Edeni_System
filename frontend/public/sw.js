@@ -18,9 +18,13 @@
   - We keep cache names versioned to allow clean upgrades.
 */
 
-const VERSION = "v4";
+const VERSION = "v5";
 const STATIC_CACHE = `edenisystem-static-${VERSION}`;
 const PAGES_CACHE = `edenisystem-pages-${VERSION}`;
+
+// `next dev` serves un-hashed chunk names, so cache-first would pin stale JS
+// forever on localhost. In dev the worker must never cache anything.
+const IS_DEV = ["localhost", "127.0.0.1", "[::1]"].includes(self.location.hostname);
 
 // Minimal offline page as a last fallback.
 const OFFLINE_HTML = `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Offline</title></head><body style="font-family:system-ui; padding:24px;"><h1>Offline</h1><p>Network is unavailable. Please try again.</p></body></html>`;
@@ -44,7 +48,7 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys.map((k) => {
-          if (k.startsWith("edenisystem-") && ![STATIC_CACHE, PAGES_CACHE].includes(k)) {
+          if (k.startsWith("edenisystem-") && (IS_DEV || ![STATIC_CACHE, PAGES_CACHE].includes(k))) {
             return caches.delete(k);
           }
           return Promise.resolve();
@@ -71,8 +75,8 @@ function isStaticAsset(request) {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Only handle GET.
-  if (request.method !== "GET") return;
+  // Only handle GET, and never intercept anything in local development.
+  if (request.method !== "GET" || IS_DEV) return;
 
   const url = new URL(request.url);
 

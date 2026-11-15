@@ -25,12 +25,25 @@ class Business(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     paid_amount_total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    subscription_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     subscription_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     users: Mapped[list["User"]] = relationship(back_populates="business")
     branches: Mapped[list["Branch"]] = relationship(back_populates="business")
     customers: Mapped[list["Customer"]] = relationship(back_populates="business")
+
+
+class SubscriptionPayment(Base):
+    __tablename__ = "subscription_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
 
 class Branch(Base):
@@ -84,6 +97,7 @@ class Product(Base):
 
     name: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     sku: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    barcode: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
     unit: Mapped[str] = mapped_column(String(50), default="unit")
 
     units: Mapped[list["ProductUnit"]] = relationship(back_populates="product")
@@ -104,6 +118,7 @@ class ProductUnit(Base):
     factor_to_base: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_base: Mapped[bool] = mapped_column(Boolean, default=False)
     selling_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    barcode: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
@@ -162,6 +177,8 @@ class Sale(Base):
 
     payment_method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
     is_credit: Mapped[bool] = mapped_column(Boolean, default=False)
+    # "draft": cart saved, nothing paid, no stock deducted. "paid": completed sale.
+    status: Mapped[str] = mapped_column(String(16), default="paid", nullable=False, index=True)
     is_voided: Mapped[bool] = mapped_column(Boolean, default=False)
     voided_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -170,9 +187,30 @@ class Sale(Base):
 
     total_amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
 
     items: Mapped[list["SaleItem"]] = relationship(back_populates="sale")
+    payments: Mapped[list["SalePayment"]] = relationship(back_populates="sale", order_by="SalePayment.id")
+
+
+class SalePayment(Base):
+    """A payment received against a sale. A sale can have several (e.g. a bar tab
+    topped up and paid again after more drinks were added)."""
+
+    __tablename__ = "sale_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id"), nullable=False, index=True)
+    sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id"), nullable=False, index=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+
+    method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    note: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    sale: Mapped[Sale] = relationship(back_populates="payments")
 
 
 class SaleItem(Base):

@@ -39,10 +39,15 @@ class Settings(BaseSettings):
 
     cookie_domain: str | None = None
 
+    # Public base URL of this API (used to build shareable receipt links).
+    # e.g. https://api.edenisystem.com  — defaults to localhost for dev.
+    public_api_url: str = "http://localhost:8000"
+
     @computed_field
     @property
     def effective_database_url(self) -> str:
-        if os.environ.get("USE_CLONE_DB") == "true" and self.database_url_clone:
+        use_clone = os.environ.get("USE_CLONE_DB", "").lower() in ("1", "true")
+        if use_clone and self.database_url_clone:
             return self.database_url_clone
         return self.database_url
 

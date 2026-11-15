@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useTranslations } from "use-intl";
 
-import { API_BASE, apiGet, apiPost } from "@/lib/api";
+import { API_BASE, apiDelete, apiGet, apiPost } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 import ProductSearch from "@/components/ProductSearch";
+import BarcodeScannerModal, { useHardwareScanner } from "@/components/BarcodeScanner";
+import WhatsAppReceiptModal from "@/components/WhatsAppReceiptModal";
+import SaleEditorModal from "@/components/SaleEditorModal";
 import { useConfirm } from "@/hooks/useConfirm";
 
 type ProductWithStock = {
@@ -20,7 +23,14 @@ type ProductWithStock = {
   batch_count: number;
 };
 
-type ProductUnit = { id: number; product_id: number; name: string; factor_to_base: number; is_base: boolean };
+type ProductUnit = {
+  id: number;
+  product_id: number;
+  name: string;
+  factor_to_base: number;
+  is_base: boolean;
+  selling_price: number | null;
+};
 
 type SaleItem = {
   product_id: number;
@@ -38,16 +48,46 @@ type SaleCreate = {
   items: { product_id: number; quantity: number; unit?: string | null; unit_price: number }[];
 };
 
+type SaleListItem = {
+  id: number;
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  line_total: number;
+};
+
+type SaleDetail = {
+  sale_id: number;
+  status: string;
+  total_amount: number;
+  customer_name: string | null;
+  updated_at: string | null;
+  items: SaleListItem[];
+};
+
 type RecentSale = {
   sale_id: number;
+  status: string;
   total_amount: number;
   payment_method: string;
   is_credit: boolean;
   customer_name: string | null;
+  customer_id: number | null;
+  customer_phone: string | null;
   created_by_user_id: number;
   created_at: string;
   items_count: number;
+  paid_total: number;
+  balance_due: number;
+  can_edit: boolean;
   items: { product_name: string; quantity: number; unit: string; unit_price: number; line_total: number }[];
+};
+
+type BarcodeLookup = {
+  product: ProductWithStock;
+  unit: { id: number; name: string; selling_price: number | null } | null;
 };
 
 export default function SellPage() {
@@ -73,6 +113,19 @@ export default function SellPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [lastSaleId, setLastSaleId] = useState<number | null>(null);
+
+  // Drafts
+  const [drafts, setDrafts] = useState<SaleDetail[]>([]);
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  // Barcode scanning
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanFeedback, setScanFeedback] = useState<string | null>(null);
+
+  // WhatsApp + edit modals
+  const [waSale, setWaSale] = useState<{ id: number; phone: string | null } | null>(null);
+  const [editSaleId, setEditSaleId] = useState<number | null>(null);
 
   useEffect(() => {
     if (customerName.trim().length < 2) {
@@ -114,6 +167,7 @@ export default function SellPage() {
         setUnits(data);
         const base = data.find((u) => u.is_base);
         setUnit(base?.name ?? (data[0]?.name ?? ""));
+        if (base?.selling_price != null) setUnitPrice(String(base.selling_price));
       } catch {
         setUnits([]);
         setUnit("");
@@ -133,9 +187,135 @@ export default function SellPage() {
     }
   }, [salesLimit]);
 
+  const loadDrafts = useCallback(async () => {
+    try {
+      const data = await apiGet<SaleDetail[]>("/api/sales/drafts");
+      setDrafts(data);
+    } catch {
+      setDrafts([]);
+    }
+  }, []);
+
   useEffect(() => {
     loadRecentSales();
-  }, [loadRecentSales]);
+    loadDrafts();
+  }, [loadRecentSales, loadDrafts]);
+
+  // Autosave the cart as a server-side draft so an unfinished sale survives
+  // a refresh, a closed tab, or switching to another screen.
+  useEffect(() => {
+    if (items.length === 0) return;
+    const id = setTimeout(async () => {
+      try {
+        const res = await apiPost<{ id: number }>("/api/sales/drafts", {
+          id: draftId,
+          customer_name: customerName.trim() || null,
+          items: items.map((i) => ({
+            product_id: i.product_id,
+            quantity: i.quantity,
+            unit: i.unit,
+            unit_price: i.unit_price,
+          })),
+        });
+        setDraftId(res.id);
+        setDraftSaved(true);
+        setTimeout(() => setDraftSaved(false), 2500);
+      } catch {
+        // autosave is best-effort; the cart stays in memory
+      }
+    }, 800);
+    return () => clearTimeout(id);
+  }, [items, customerName, draftId]);
+
+  async function resumeDraft(d: SaleDetail) {
+    try {
+      const full = await apiGet<SaleDetail>(`/api/sales/${d.sale_id}`);
+      setItems(
+        full.items.map((i) => ({
+          product_id: i.product_id,
+          product_name: i.product_name,
+          quantity: i.quantity,
+          unit: i.unit,
+          unit_price: i.unit_price,
+        }))
+      );
+      setCustomerName(full.customer_name ?? "");
+      setDraftId(full.sale_id);
+      setError(null);
+      setSuccess(null);
+    } catch (e: any) {
+      setError(e?.message ?? t("errors.failedToLoad"));
+    }
+  }
+
+  async function discardDraft(id: number) {
+    try {
+      await apiDelete(`/api/sales/drafts/${id}`);
+      if (draftId === id) {
+        setDraftId(null);
+        setItems([]);
+      }
+      await loadDrafts();
+    } catch {
+      // ignore
+    }
+  }
+
+  // Hardware barcode scanner: works anywhere on this page — a scanner "types"
+  // the code fast and presses Enter; we catch that burst and look it up.
+  const handleBarcode = useCallback(
+    async (code: string) => {
+      setScanOpen(false);
+      setError(null);
+      try {
+        const d = await apiGet<BarcodeLookup>(
+          `/api/inventory/products/by-barcode/${encodeURIComponent(code)}`
+        );
+        const unitName = d.unit?.name ?? null;
+        const unitPrice = d.unit?.selling_price ?? null;
+        if (unitPrice == null) {
+          // No default price on this unit: pre-select it so the cashier only
+          // has to type the price and press "Add item".
+          setSelectedProduct(d.product);
+          setQuantity("1");
+          setScanFeedback(`${d.product.name}: ${t("barcode.enterPrice")}`);
+          setTimeout(() => setScanFeedback(null), 4000);
+          return;
+        }
+        setItems((prev) => {
+          const idx = prev.findIndex(
+            (i) => i.product_id === d.product.id && (i.unit ?? null) === unitName
+          );
+          if (idx >= 0) {
+            const copy = [...prev];
+            copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + 1 };
+            return copy;
+          }
+          return [
+            ...prev,
+            {
+              product_id: d.product.id,
+              product_name: d.product.name,
+              quantity: 1,
+              unit: unitName,
+              unit_price: unitPrice,
+            },
+          ];
+        });
+        setScanFeedback(`✓ ${d.product.name}${unitName ? ` (${unitName})` : ""}`);
+        setTimeout(() => setScanFeedback(null), 3000);
+      } catch (e: any) {
+        const msg = e?.status === 404
+          ? t("barcode.notFound", { code })
+          : e?.message ?? t("barcode.notFound", { code });
+        setScanFeedback(`⚠ ${msg}`);
+        setTimeout(() => setScanFeedback(null), 5000);
+      }
+    },
+    [t]
+  );
+
+  useHardwareScanner(handleBarcode, !scanOpen && editSaleId === null && waSale === null);
 
   const total = useMemo(() => {
     return items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
@@ -171,7 +351,14 @@ export default function SellPage() {
   }
 
   function removeItem(idx: number) {
-    setItems((prev) => prev.filter((_, i) => i !== idx));
+    setItems((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      if (next.length === 0 && draftId) {
+        apiDelete(`/api/sales/drafts/${draftId}`).catch(() => {});
+        setDraftId(null);
+      }
+      return next;
+    });
   }
 
   async function submitSale() {
@@ -200,14 +387,18 @@ export default function SellPage() {
     };
 
     try {
-      const res = await apiPost<{ id: number; total_amount: number }>("/api/sales/", payload);
+      const res = await apiPost<{ id: number; total_amount: number }>(
+        draftId ? `/api/sales/drafts/${draftId}/checkout` : "/api/sales/",
+        payload
+      );
       setItems([]);
       setCustomerName("");
       setIsCredit(false);
       setDueDate("");
+      setDraftId(null);
       setLastSaleId(res.id);
       setSuccess(t("labels.savedSale", { id: res.id }));
-      await loadRecentSales();
+      await Promise.all([loadRecentSales(), loadDrafts()]);
     } catch (e: any) {
       setError(e?.message ?? t("errors.failedToSaveSale"));
     } finally {
@@ -255,17 +446,74 @@ export default function SellPage() {
     <div className="space-y-6">
       <h1 className="app-page-title">{t("sell.title")}</h1>
 
+      {/* Drafts (unfinished sales) */}
+      {drafts.length > 0 && (
+        <div className="app-card p-4 space-y-2">
+          <div className="text-sm font-semibold text-gray-700">{t("drafts.title")}</div>
+          <div className="flex flex-wrap gap-2">
+            {drafts.map((d) => (
+              <div
+                key={d.sale_id}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm cursor-pointer transition-colors ${
+                  draftId === d.sale_id
+                    ? "border-[#0a7e6b] bg-[#0a7e6b]/10 text-[#0a7e6b]"
+                    : "border-black/10 hover:border-[#0a7e6b]/50 text-gray-700"
+                }`}
+                onClick={() => resumeDraft(d)}
+              >
+                <span className="font-medium">
+                  {d.customer_name || t("drafts.unnamed", { id: d.sale_id })}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {d.items.length} · {d.total_amount.toFixed(0)}
+                </span>
+                <button
+                  className="text-gray-300 hover:text-red-500 ml-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    discardDraft(d.sale_id);
+                  }}
+                  type="button"
+                  aria-label={t("drafts.discard")}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Sale Form */}
       <div className="app-card p-5 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1.5 md:col-span-2">
             <label className="app-label">{t("sell.product")}</label>
-            <ProductSearch
-              key={productSearchKey}
-              value={selectedProduct}
-              onSelect={setSelectedProduct}
-              placeholder={t("sell.product")}
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <ProductSearch
+                  key={productSearchKey}
+                  value={selectedProduct}
+                  onSelect={setSelectedProduct}
+                  placeholder={t("sell.product")}
+                />
+              </div>
+              <button
+                className="app-btn-outline whitespace-nowrap"
+                onClick={() => setScanOpen(true)}
+                type="button"
+                title={t("barcode.scanTitle")}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            {scanFeedback ? (
+              <p className={`text-xs font-medium ${scanFeedback.startsWith("⚠") ? "text-red-600" : "text-[#0a7e6b]"}`}>
+                {scanFeedback}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -322,9 +570,14 @@ export default function SellPage() {
           </div>
         </div>
 
-        <button className="app-btn-outline" onClick={addItem} type="button">
-          {t("sell.addItem")}
-        </button>
+        <div className="flex items-center gap-3">
+          <button className="app-btn-outline" onClick={addItem} type="button">
+            {t("sell.addItem")}
+          </button>
+          {draftSaved ? (
+            <span className="text-xs text-gray-400">{t("drafts.autosaved")}</span>
+          ) : null}
+        </div>
 
         {/* Items list with product names and remove buttons */}
         <div className="rounded-xl border border-black/5 overflow-hidden">
@@ -429,14 +682,23 @@ export default function SellPage() {
           </div>
           <div className="flex items-center gap-3">
             {lastSaleId && (
-              <a
-                href={`${API_BASE}/api/sales/${lastSaleId}/receipt`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="app-btn-ghost text-sm"
-              >
-                {t("products.viewReceipt")}
-              </a>
+              <>
+                <a
+                  href={`${API_BASE}/api/sales/${lastSaleId}/receipt`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-btn-ghost text-sm"
+                >
+                  {t("products.viewReceipt")}
+                </a>
+                <button
+                  className="app-btn-ghost text-sm text-[#25D366]"
+                  onClick={() => setWaSale({ id: lastSaleId, phone: null })}
+                  type="button"
+                >
+                  WhatsApp
+                </button>
+              </>
             )}
             <button
               className="app-btn-primary"
@@ -505,7 +767,14 @@ export default function SellPage() {
                       ))}
                       {s.items.length > 2 ? <span className="text-xs text-gray-400"> +{s.items.length - 2} more</span> : null}
                     </td>
-                    <td className="font-semibold">{s.total_amount.toFixed(2)}</td>
+                    <td className="font-semibold">
+                      {s.total_amount.toFixed(2)}
+                      {s.balance_due > 0.005 ? (
+                        <span className="block text-[10px] font-normal text-orange-600">
+                          {t("editSale.balanceDue")}: {s.balance_due.toFixed(0)}
+                        </span>
+                      ) : null}
+                    </td>
                     <td>
                       <span className="text-xs font-medium uppercase">{s.payment_method}</span>
                       {s.is_credit && <span className="text-xs text-orange-600 ml-1">credit</span>}
@@ -522,6 +791,22 @@ export default function SellPage() {
                         >
                           {t("products.receipt")}
                         </a>
+                        <button
+                          className="text-xs text-[#25D366] hover:text-[#1ebe5d] font-medium"
+                          onClick={() => setWaSale({ id: s.sale_id, phone: s.customer_phone })}
+                          type="button"
+                        >
+                          WhatsApp
+                        </button>
+                        {s.can_edit && (
+                          <button
+                            className="text-xs text-[#0a7e6b] hover:text-[#086b5b] font-medium"
+                            onClick={() => setEditSaleId(s.sale_id)}
+                            type="button"
+                          >
+                            {t("editSale.edit")}
+                          </button>
+                        )}
                         {(me?.id === s.created_by_user_id || isBoss) && (
                           <button
                             className="text-xs text-red-600 hover:text-red-700 font-medium"
@@ -540,6 +825,20 @@ export default function SellPage() {
           </div>
         )}
       </div>
+
+      {scanOpen && (
+        <BarcodeScannerModal onDetected={handleBarcode} onClose={() => setScanOpen(false)} />
+      )}
+      {waSale && (
+        <WhatsAppReceiptModal saleId={waSale.id} defaultPhone={waSale.phone} onClose={() => setWaSale(null)} />
+      )}
+      {editSaleId !== null && (
+        <SaleEditorModal
+          saleId={editSaleId}
+          onClose={() => setEditSaleId(null)}
+          onChanged={loadRecentSales}
+        />
+      )}
     <Dialog />
     </div>
   );

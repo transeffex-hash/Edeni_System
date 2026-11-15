@@ -12,6 +12,7 @@ from backend.app.core.config import settings
 from backend.app.core.pii_crypto import pii_encrypt, pii_hash
 from backend.app.core.push import enqueue_push
 from backend.app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
+from backend.app.core.subscription import is_subscription_blocked
 from backend.app.models.entities import Business, DeviceToken, User, UserRole
 from backend.app.schemas.auth import RegisterRequest, Token
 
@@ -62,6 +63,8 @@ def login(
     business = db.query(Business).filter(Business.id == user.business_id).first()
     if not business or not business.is_active or business.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Business account is inactive")
+    if is_subscription_blocked(business):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Subscription expired. Please contact EdeniSystem to renew.")
 
     user.last_login_at = datetime.utcnow()
     db.commit()

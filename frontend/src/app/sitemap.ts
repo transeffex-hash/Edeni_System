@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://edenisystem.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.edenisystem.com";
 
 const LOCALES = ["en", "rw"] as const;
 const PUBLIC_PATHS = ["", "/login", "/register"] as const;

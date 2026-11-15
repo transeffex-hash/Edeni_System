@@ -20,11 +20,14 @@ from backend.app.models.entities import (
     UserRole,
 )
 from backend.app.schemas.inventory import (
+    BarcodeLookup,
     InventorySummary,
     ProductCreate,
     ProductOut,
     ProductUnitCreate,
     ProductUnitOut,
+    ProductUnitUpdate,
+    ProductUpdate,
     ProductWithStock,
     StockBatchCreate,
     StockBatchOut,
@@ -32,6 +35,59 @@ from backend.app.schemas.inventory import (
 )
 
 router = APIRouter()
+
+
+def _clean_barcode(raw: str | None) -> str | None:
+    code = (raw or "").strip()
+    return code or None
+
+
+def _barcode_in_use(
+    db: Session,
+    business_id: int,
+    code: str,
+    *,
+    exclude_product_id: int | None = None,
+    exclude_unit_id: int | None = None,
+) -> bool:
+    pq = db.query(Product.id).filter(Product.business_id == business_id, Product.barcode == code)
+    if exclude_product_id is not None:
+        pq = pq.filter(Product.id != exclude_product_id)
+    if pq.first():
+        return True
+    uq = db.query(ProductUnit.id).filter(ProductUnit.business_id == business_id, ProductUnit.barcode == code)
+    if exclude_unit_id is not None:
+        uq = uq.filter(ProductUnit.id != exclude_unit_id)
+    return uq.first() is not None
+
+
+def _product_with_stock(db: Session, user: User, product: Product) -> ProductWithStock:
+    stock_filter = [StockBatch.business_id == user.business_id, StockBatch.product_id == product.id]
+    if user.branch_id is not None:
+        stock_filter.append(or_(StockBatch.branch_id == user.branch_id, StockBatch.branch_id.is_(None)))
+    agg = (
+        db.query(
+            func.coalesce(func.sum(StockBatch.quantity), 0),
+            func.min(StockBatch.expiry_date),
+            func.max(StockBatch.created_at),
+            func.count(StockBatch.id),
+        )
+        .filter(*stock_filter)
+        .one()
+    )
+    latest = db.query(StockBatch.cost_price).filter(*stock_filter).order_by(StockBatch.id.desc()).first()
+    return ProductWithStock(
+        id=product.id,
+        name=product.name,
+        sku=product.sku,
+        unit=product.unit,
+        barcode=product.barcode,
+        total_stock=int(agg[0] or 0),
+        latest_cost_price=float(latest[0]) if latest and latest[0] is not None else None,
+        nearest_expiry=agg[1],
+        last_stock_date=agg[2],
+        batch_count=int(agg[3] or 0),
+    )
 
 
 @router.post("/products", response_model=ProductOut)
@@ -43,6 +99,7 @@ def create_product(
     name = payload.name.strip()
     unit = payload.unit.strip() or "unit"
     sku = payload.sku.strip() if payload.sku else None
+    barcode = _clean_barcode(payload.barcode)
     if not name:
         raise HTTPException(status_code=400, detail="Product name is required")
     duplicate_query = db.query(Product).filter(Product.business_id == user.business_id, Product.name == name)
@@ -52,15 +109,32 @@ def create_product(
         raise HTTPException(status_code=409, detail="Product already exists")
     if sku and duplicate_query.first():
         raise HTTPException(status_code=409, detail="Product SKU already exists")
+    if barcode and _barcode_in_use(db, user.business_id, barcode):
+        raise HTTPException(status_code=409, detail="This barcode is already assigned to another product")
 
     product = Product(
         business_id=user.business_id,
         name=name,
         sku=sku,
         unit=unit,
+        barcode=barcode,
     )
     db.add(product)
     db.flush()
+
+    # A default selling price makes scanning at the till instant (no price typing).
+    if payload.selling_price is not None:
+        db.add(
+            ProductUnit(
+                business_id=user.business_id,
+                product_id=product.id,
+                name=unit,
+                factor_to_base=1,
+                is_base=True,
+                selling_price=payload.selling_price,
+            )
+        )
+
     log_audit(
         db=db,
         business_id=user.business_id,
@@ -68,11 +142,92 @@ def create_product(
         action="create_product",
         resource="Product",
         resource_id=product.id,
-        details={"name": product.name, "sku": product.sku},
+        details={"name": product.name, "sku": product.sku, "barcode": product.barcode},
     )
     db.commit()
     db.refresh(product)
     return product
+
+
+@router.patch("/products/{product_id}", response_model=ProductOut)
+def update_product(
+    product_id: int,
+    payload: ProductUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    product = (
+        db.query(Product)
+        .filter(Product.business_id == user.business_id, Product.id == product_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if payload.name is not None:
+        name = payload.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Product name is required")
+        product.name = name
+    if payload.sku is not None:
+        product.sku = payload.sku.strip() or None
+    if payload.unit is not None and payload.unit.strip():
+        product.unit = payload.unit.strip()
+    if payload.barcode is not None:
+        code = _clean_barcode(payload.barcode)
+        if code and _barcode_in_use(db, user.business_id, code, exclude_product_id=product.id):
+            raise HTTPException(status_code=409, detail="This barcode is already assigned to another product")
+        product.barcode = code
+
+    log_audit(
+        db=db,
+        business_id=user.business_id,
+        user_id=user.id,
+        action="update_product",
+        resource="Product",
+        resource_id=product.id,
+        details={"name": product.name, "sku": product.sku, "barcode": product.barcode},
+    )
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.get("/products/by-barcode/{code}", response_model=BarcodeLookup)
+def lookup_barcode(
+    code: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Resolve a scanned barcode to a product (and the specific unit, if the
+    barcode belongs to a unit such as a carton)."""
+    code = code.strip()
+    if not code:
+        raise HTTPException(status_code=400, detail="Empty barcode")
+
+    unit_row = (
+        db.query(ProductUnit)
+        .filter(ProductUnit.business_id == user.business_id, ProductUnit.barcode == code)
+        .first()
+    )
+    if unit_row:
+        product = db.query(Product).filter(Product.id == unit_row.product_id).first()
+        return BarcodeLookup(product=_product_with_stock(db, user, product), unit=unit_row)
+
+    product = (
+        db.query(Product)
+        .filter(Product.business_id == user.business_id, Product.barcode == code)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="No product with this barcode")
+    base_unit = (
+        db.query(ProductUnit)
+        .filter(ProductUnit.business_id == user.business_id, ProductUnit.product_id == product.id)
+        .order_by(ProductUnit.is_base.desc(), ProductUnit.id.asc())
+        .first()
+    )
+    return BarcodeLookup(product=_product_with_stock(db, user, product), unit=base_unit)
 
 
 @router.get("/products/{product_id}/units", response_model=list[ProductUnitOut])
@@ -121,6 +276,10 @@ def create_product_unit(
     if existing_unit:
         raise HTTPException(status_code=409, detail="Product unit already exists")
 
+    barcode = _clean_barcode(payload.barcode)
+    if barcode and _barcode_in_use(db, user.business_id, barcode):
+        raise HTTPException(status_code=409, detail="This barcode is already assigned to another product")
+
     if payload.is_base:
         # Enforce single base unit per product
         (
@@ -137,8 +296,37 @@ def create_product_unit(
         factor_to_base=payload.factor_to_base,
         is_base=payload.is_base,
         selling_price=payload.selling_price,
+        barcode=barcode,
     )
     db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.patch("/products/{product_id}/units/{unit_id}", response_model=ProductUnitOut)
+def update_product_unit(
+    product_id: int,
+    unit_id: int,
+    payload: ProductUnitUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    row = (
+        db.query(ProductUnit)
+        .filter(ProductUnit.business_id == user.business_id)
+        .filter(ProductUnit.product_id == product_id, ProductUnit.id == unit_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Product unit not found")
+    if payload.selling_price is not None:
+        row.selling_price = payload.selling_price
+    if payload.barcode is not None:
+        code = _clean_barcode(payload.barcode)
+        if code and _barcode_in_use(db, user.business_id, code, exclude_unit_id=row.id):
+            raise HTTPException(status_code=409, detail="This barcode is already assigned to another product")
+        row.barcode = code
     db.commit()
     db.refresh(row)
     return row
@@ -225,6 +413,7 @@ def list_products_with_stock(
             Product.name,
             Product.sku,
             Product.unit,
+            Product.barcode,
             func.coalesce(func.sum(StockBatch.quantity), 0).label("total_stock"),
             latest_batches.c.latest_cost_price,
             func.min(StockBatch.expiry_date).label("nearest_expiry"),
@@ -245,12 +434,16 @@ def list_products_with_stock(
             Product.name,
             Product.sku,
             Product.unit,
+            Product.barcode,
             latest_batches.c.latest_cost_price,
         )
     )
 
     if search:
-        query = query.filter(Product.name.ilike(f"%{search}%"))
+        s = search.strip()
+        query = query.filter(
+            or_(Product.name.ilike(f"%{s}%"), Product.sku.ilike(f"%{s}%"), Product.barcode == s)
+        )
 
     if date_from:
         try:
@@ -282,6 +475,7 @@ def list_products_with_stock(
             name=r.name,
             sku=r.sku,
             unit=r.unit,
+            barcode=r.barcode,
             total_stock=int(r.total_stock or 0),
             latest_cost_price=float(r.latest_cost_price) if r.latest_cost_price else None,
             nearest_expiry=r.nearest_expiry if r.nearest_expiry else None,

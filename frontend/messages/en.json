@@ -8,7 +8,8 @@
     "failedToCreateProduct": "Failed to create product",
     "required": "This field is required",
     "failedToAddStock": "Failed to add stock",
-    "registerFailed": "Register failed"
+    "registerFailed": "Register failed",
+    "failedToSave": "Failed to save"
   },
   "admin": {
     "title": "Platform Admin",
@@ -48,7 +49,23 @@
     "products": "products",
     "branches": "branches",
     "lastLogin": "Last login",
-    "neverLoggedIn": "Never"
+    "neverLoggedIn": "Never",
+    "subscriptionTitle": "Subscription — {name}",
+    "subStart": "Start date",
+    "subEnd": "End date",
+    "subDuration": "Duration: {days} days",
+    "subQuick": "Quick",
+    "subAmount": "Amount paid (RWF)",
+    "subNote": "Note",
+    "subNotePlaceholder": "e.g. paid via MoMo, invoice #...",
+    "subSave": "Save extension",
+    "subSaving": "Saving...",
+    "subCancel": "Cancel",
+    "subEndAfterStart": "End date must be after the start date",
+    "subHistory": "Payment history",
+    "subNoHistory": "No payments recorded yet",
+    "subMonth": "month",
+    "subMonths": "months"
   },
   "labels": {
     "unit": "Unit",
@@ -132,7 +149,8 @@
     "haveAccount": "Already have an account?",
     "noAccount": "No account yet?",
     "registerCta": "Register",
-    "logout": "Logout"
+    "logout": "Logout",
+    "phoneOptional": "Phone (optional)"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -234,7 +252,8 @@
     "customerNamePlaceholder": "Start typing a customer name...",
     "total": "Total",
     "saveSale": "Save sale",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "quantity": "Quantity"
   },
   "ledger": {
     "title": "Ledgers",
@@ -272,7 +291,8 @@
     "entryPayment": "Payment",
     "noEntriesPeriod": "No entries in this period",
     "failedToLoad": "Failed to load entries",
-    "failedToSave": "Failed"
+    "failedToSave": "Failed",
+    "oldestFirst": "Oldest entries shown first"
   },
   "reports": {
     "title": "Reports",
@@ -325,7 +345,11 @@
       "paymentMethod": "Payment Method",
       "voidedBy": "Voided By",
       "voidedAt": "Voided At",
-      "reason": "Reason"
+      "reason": "Reason",
+      "saleId": "Sale",
+      "customer": "Customer",
+      "dueDate": "Due Date",
+      "daysOverdue": "Days Overdue"
     },
     "urgency": {
       "expired": "Expired",
@@ -475,5 +499,81 @@
     "title": "Are you sure?",
     "confirm": "Confirm",
     "cancel": "Cancel"
+  },
+  "common": {
+    "loadMore": "Load more"
+  },
+  "subscription": {
+    "expiredTitle": "Subscription expired",
+    "graceBody": "Your subscription has expired. You have {days} day(s) left to renew before access is blocked.",
+    "expiringSoon": "Your subscription expires in {days} day(s)."
+  },
+  "whatsapp": {
+    "title": "Send receipt on WhatsApp",
+    "hint": "Send receipt #{id} to the customer",
+    "phone": "Customer phone number",
+    "invalidPhone": "Enter a valid phone number",
+    "send": "Open WhatsApp",
+    "opening": "Opening...",
+    "note": "WhatsApp opens with the message ready — just press send.",
+    "failed": "Could not prepare the receipt",
+    "msgGreeting": "Hello{name},",
+    "msgReceipt": "Your receipt #{id}:",
+    "msgTotal": "Total",
+    "msgLink": "View the full receipt:",
+    "msgThanks": "Thank you for shopping with us!"
+  },
+  "barcode": {
+    "scanTitle": "Scan barcode",
+    "scanHint": "Point the camera at a barcode, or use a barcode scanner",
+    "manualPlaceholder": "Or type the code",
+    "use": "Use",
+    "cameraUnsupported": "Camera scanning is not supported on this device — type the code instead",
+    "cameraDenied": "Camera access denied. Allow camera permission and try again",
+    "notFound": "No product found with barcode {code}",
+    "enterPrice": "enter a price, then press Add item",
+    "stillScanning": "Still scanning — try moving closer or improving the light",
+    "startingCamera": "Starting camera…",
+    "pointAtBarcode": "Point the camera at the barcode",
+    "tryingStronger": "Trying a stronger scanner engine…",
+    "engineFailed": "Could not start the scanner engine — check your connection and try again"
+  },
+  "drafts": {
+    "title": "Unfinished sales",
+    "unnamed": "Draft #{id}",
+    "discard": "Discard",
+    "autosaved": "Draft saved automatically"
+  },
+  "editSale": {
+    "title": "Sale #{id}",
+    "edit": "Edit",
+    "savePrice": "Save",
+    "addItem": "Add a product",
+    "payments": "Payments",
+    "creditNote": "Credit sale — tracked in the customer ledger",
+    "balanceDue": "Balance due",
+    "paidInFull": "Paid in full",
+    "noPayments": "No payments recorded",
+    "amount": "Amount",
+    "recordPayment": "Record payment"
+  },
+  "units": {
+    "title": "Units & barcodes — {name}",
+    "manage": "Units",
+    "productBarcode": "Product barcode",
+    "productBarcodeHint": "Used when the product has a single sellable unit",
+    "barcodeOptional": "Barcode (optional)",
+    "barcodePlaceholder": "Scan or type barcode",
+    "existing": "Units",
+    "none": "No units yet — add e.g. piece, carton, box",
+    "base": "base",
+    "price": "Selling price",
+    "save": "Save",
+    "add": "Add a unit (e.g. carton = 24 pieces)",
+    "name": "Unit name",
+    "namePlaceholder": "e.g. carton",
+    "factor": "Factor",
+    "factorPlaceholder": "= N {unit}",
+    "factorHint": "How many base units make one of these. A carton of 24 pieces has factor 24."
   }
 }
